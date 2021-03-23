@@ -1,0 +1,180 @@
+#!/usr/bin/env python
+###############################################################################
+
+__author__ = "Alex Chklovski"
+__version__ = "0.0.1"
+__maintainer__ = "Alex Chklovski"
+__email__ = "chklovski near gmail.com"
+__status__ = "Development"
+
+
+from checkm2.defaultValues import DefaultValues
+from checkm2.versionControl import VersionControl
+from checkm2 import fileManager
+from checkm2 import predictQuality
+
+import argparse
+from argparse import RawTextHelpFormatter
+import sys
+import logging
+import tempfile
+import pandas as pd
+import os
+
+
+def generate_header():
+    header = "\t\t  ____ _               _    __  __ ____  \n " \
+             "\t\t / ___| |__   ___  ___| | _|  \/  |___ \ \n " \
+             "\t\t| |   | '_ \ / _ \/ __| |/ / |\/| | __) | \n " \
+             "\t\t| |___| | | |  __/ (__|   <| |  | |/ __/  \n " \
+             "\t\t \____|_| |_|\___|\___|_|\_\_|  |_|_____| \n "
+
+    return header
+
+
+if __name__ == '__main__':
+
+    num_threads = 1
+
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument('--debug', help='output debug information', action="store_true")
+    parent_parser.add_argument('--version', help='output version information and quit',  action='version', version=__version__)
+    parent_parser.add_argument('--quiet', help='only output errors', action="store_true")
+
+
+    parser = argparse.ArgumentParser(parents=[parent_parser])
+    subparsers = parser.add_subparsers(title="Sub-commands", dest='subparser_name', parser_class=argparse.ArgumentParser)
+    subparser_name_to_parser = {}
+
+    def new_subparser(subparsers, parser_name, parser_description):
+        subpar = subparsers.add_parser(parser_name,
+                                       description=parser_description,
+                                       help=parser_description,
+                                       formatter_class=RawTextHelpFormatter,
+                                       parents=[parent_parser])
+        subparser_name_to_parser[parser_name] = subpar
+        return subpar
+
+
+    predict_description = 'Predict the completeness and contamination of genome bins in a folder.'
+    testrun_description = 'Runs Checkm2 on internal test genomes to ensure it runs without errors.'
+    download_description = 'Download/set up required diamond database for CheckM2. Example usage: \n\n ' \
+                           '\tcheckm2 database --download (downloads database into /home/user/databases)\n ' \
+                           '\tcheckm2 database --download --path /path/to/custom_location  (downloads database into specified folder)\n ' \
+                           '\tcheckm2 database --dblocation /path/to/downloaded_database_file (uses specified database file as DB) \n\n ' \
+                           'Alternatively, add an existing DIAMOND DB file to path: "export CHECKM2DB=/path/to/database/"\n\n'
+
+    predict_parser = new_subparser(subparsers, 'predict', predict_description)
+
+    predict_arguments = predict_parser.add_argument_group('required arguments')
+
+    predict_arguments.add_argument('--genome-fasta-directory', '--genome_fasta_directory', '-i', help="Path to folder containing MAGs to be analyzed", required=True)
+    predict_arguments.add_argument('--output-directory', '--output_directory', '-o', help="Path output to folder", required=True)
+
+
+    predict_arguments = predict_parser.add_argument_group('additional arguments')
+
+    predict_arguments.add_argument('--general', action='store_true',
+                                   help='Force the use of the general quality prediction model (gradient boost)', default=False)
+    predict_arguments.add_argument('--specific', action='store_true',
+                                   help='Force the use of the specific quality prediction model (neural network)', default=False)
+    predict_arguments.add_argument('--allmodels', action='store_true',
+                                   help='Output quality prediction for both models for each genome.', default=False)
+    predict_arguments.add_argument('--genes', action='store_true',
+                                   help='Treat input files as protein files. [Default: False]', default=False)
+    predict_arguments.add_argument('-x', '--extension',
+                                   help='Extension of input files. [Default: .fna]', default='.fna')
+
+    predict_arguments.add_argument('--force', action='store_true', help='overwrite output directory [default: not set]', default=False)
+    predict_arguments.add_argument('--threads', '-t', type=int, metavar='num_threads', help='number of CPUS to use [default: %i]' % num_threads, default=num_threads)
+    predict_arguments.add_argument('--dbg_cos', action='store_true', help="DEBUG: write cosing similarity values to file [default: don't]", default=False)
+    predict_arguments.add_argument('--dbg_vectors', action='store_true', help="DEBUG: dump pickled feature vectors to file [default: don't]", default=False)
+
+    test_parser = new_subparser(subparsers, 'testrun', testrun_description)
+    test_parser.add_argument('--threads', '-t', type=int, metavar='num_threads', help='number of CPUS to use [default: %i]' % num_threads, default=num_threads)
+
+    download_parser = new_subparser(subparsers, 'database', download_description)
+    action  = download_parser.add_mutually_exclusive_group(required=True)
+    action.add_argument('--download', help="Download DIAMOND database. By default installs into [{}]".format(DefaultValues.DEFAULT_DB_INSTALL_LOCATION), action='store_true')
+    action.add_argument('--dblocation', help="Point CheckM2 to the DIAMOND database location if already downloaded.")
+    action.add_argument('--current',  action='store_true', help="Print where current database is installed.")
+    download_parser.add_argument('--path', help='Custom path for downloading and installing database file.', default=DefaultValues.DEFAULT_DB_INSTALL_LOCATION)
+
+
+
+    if (len(sys.argv) == 1 or sys.argv[1] == '-h' or sys.argv[1] == '--help' or sys.argv[1] == 'help'):
+        print('{}'.format(generate_header()))
+        print('                ...::: CheckM2 v' + __version__ + ' :::...''')
+        print('\n  General usage:')
+        print('    predict         -> %s' % predict_description)
+        print('    testrun         -> %s' % testrun_description)
+        print('    database        -> %s' % 'Download and set up required CheckM2 DIAMOND database for annotation')
+
+        print('\n  Use checkm2 <command> -h for command-specific help.\n')
+        sys.exit(0)
+
+    else:
+        args = parser.parse_args()
+
+    if args.debug:
+        loglevel = logging.DEBUG
+    elif args.quiet:
+        loglevel = logging.ERROR
+    else:
+        loglevel = logging.INFO
+
+    logging.basicConfig(level=loglevel, format='[%(asctime)s] %(levelname)s: %(message)s',
+                        datefmt='%m/%d/%Y %I:%M:%S %p')
+
+    def validate_args_model_choice(args):
+        if (args.specific and args.general) or (args.specific and args.allmodels) or (args.general and args.allmodels):
+            logging.error("Only one of --general --specific --allmodels can be specified.")
+            sys.exit(1)
+        if args.specific:
+            return 'specific'
+        elif args.general:
+            return 'general'
+        if args.allmodels:
+            return 'both'
+        else:
+            return 'auto'
+
+    if args.subparser_name == 'predict':
+        mode = validate_args_model_choice(args)
+        logging.info("Running quality prediction workflow with {} threads.".format(args.threads))
+        predictor = predictQuality.Predictor(args.genome_fasta_directory, args.output_directory, args.extension, args.threads, args.force)
+        predictor.prediction_wf(args.genes, mode, args.dbg_cos, args.dbg_vectors)
+
+
+    elif args.subparser_name == 'testrun':
+        logging.info("Test run: Running quality prediction workflow on test genomes with {} threads.".format(args.threads))
+        logging.info('Running checksum on test genomes.')
+        if VersionControl().checksum_test_genomes():
+            logging.info('Checksum successful.')
+        else:
+            logging.error('Checksum unsuccessful. Please re-download test genomes or ensure CheckM2 version is correct.')
+            sys.exit(1)
+
+        with tempfile.TemporaryDirectory() as temp_out_dir:
+            predictor = predictQuality.Predictor(DefaultValues.TESTRUN_GENOMES, temp_out_dir, '.tst', args.threads, False)
+            predictor.prediction_wf(False, 'auto', True)
+
+            results = pd.read_csv(os.path.join(temp_out_dir, 'quality_report.tsv'), sep='\t')
+            if len(results) > 1:
+                logging.info('Test run successful!')
+            else:
+                logging.error("Couldn't verify test run results.")
+
+
+    elif args.subparser_name == 'database':
+
+        if args.dblocation:
+            fileManager.DiamondDB().set_DB_location(args.dblocation)
+        elif args.download:
+            fileManager.DiamondDB().download_database(args.path)
+        elif args.current:
+            loc = fileManager.DiamondDB().get_DB_location()
+            logging.info(str(loc))
+
+    else:
+        raise Exception("Programming error")
