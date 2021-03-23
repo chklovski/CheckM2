@@ -3,7 +3,7 @@ Rapid assessment of genome bins quality using machine learning.
 
 # Installation
 
-The easiest way to install is using conda. This is pending. 
+The easiest way to install is using conda. In the future. 
 
 Alternatively, retrieve the github files: 
 
