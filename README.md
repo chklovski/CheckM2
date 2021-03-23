@@ -1,2 +1,25 @@
 # CheckM2
-Assessing the quality of genome bins
+Rapid assessment of genome bin quality using machine learning. 
+
+# Installation
+
+The easiest way to install is using conda. This is pending. 
+
+Alternatively, first create a conda environment using the `checkm2.yml` file:
+```
+conda env create -n checkm2 -f checkm2.yml
+```
+
+Then 
+```
+git clone --recursive https://github.com/chklovski/checkm2.git \
+cd checkm2 \
+python setup.py build \ 
+python setup.py install
+```
+
+# Database
+
+You will also need to download and install the external DIAMOND database CheckM2 relies on for rapid annotation. Use `checkm2 database --download` to install it into your default /home/user/databases directory, or provide a custom location using `checkm2 database --download --path /custom/path/`
+
+You can test that the CheckM2 installation was successfull using `checkm2 testrun`
