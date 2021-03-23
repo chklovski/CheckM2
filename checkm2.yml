@@ -1,0 +1,18 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python>=3.6
+  - scikit-learn=0.23.2
+  - h5py=2.10.0
+  - numpy=1.16.4
+  - diamond>=2.0.4
+  - tensorflow
+  - xgboost
+  - pandas
+  - scipy
+  - prodigal>=2.6.3
+  - setuptools
+  - requests
+  - packaging
