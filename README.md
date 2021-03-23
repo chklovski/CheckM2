@@ -14,12 +14,18 @@ git clone --recursive https://github.com/chklovski/checkm2.git && cd checkm2
 Then create a conda environment using the `checkm2.yml` file:
 ```
 conda env create -n checkm2 -f checkm2.yml
+conda activate checkm2
 ```
 
 Finally, install CheckM2:
 ```
-python setup.py build \ 
 python setup.py install
+```
+
+Installation is then complete. To run checkm2, then you can
+```
+conda activate checkm2
+checkm2 -h
 ```
 
 # Database
