@@ -112,7 +112,7 @@ class DiamondDB:
                               .format(download_location))
                 sys.exit(1)
 
-            logging.info('Downloading to: {}.'.format(download_location))
+            logging.info('Downloading to: {}'.format(download_location))
 
             try:
                 r = requests.get(download_link, allow_redirects=True)
