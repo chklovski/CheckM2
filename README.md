@@ -1,6 +1,33 @@
 # CheckM2
 Rapid assessment of genome bins quality using machine learning. 
 
+
+# Run without installing
+
+For simplicity, you can just download CheckM2 from GitHub and run it directly without installing. 
+
+Retrieve the files: 
+```
+git clone --recursive https://github.com/chklovski/checkm2.git && cd checkm2
+```
+
+Create an appropriate conda environment with prerequisites using the `checkm2.yml` file:
+```
+conda env create -n checkm2 -f checkm2.yml
+conda activate checkm2
+```
+Finally, run CheckM2 via python:
+
+```
+python bin/checkm2 -h
+```
+or make it executable:
+
+```
+chmod +x bin/checkm2
+bin/checkm2 -h
+```
+
 # Installation
 
 The easiest way to install is using conda. In the future. 
