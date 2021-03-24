@@ -88,6 +88,7 @@ if __name__ == '__main__':
 
     predict_arguments.add_argument('--force', action='store_true', help='overwrite output directory [default: not set]', default=False)
     predict_arguments.add_argument('--threads', '-t', type=int, metavar='num_threads', help='number of CPUS to use [default: %i]' % num_threads, default=num_threads)
+    predict_arguments.add_argument('--stdout', action='store_true', help='Print results to stdout [default: write to file]', default=False)
     predict_arguments.add_argument('--dbg_cos', action='store_true', help="DEBUG: write cosing similarity values to file [default: don't]", default=False)
     predict_arguments.add_argument('--dbg_vectors', action='store_true', help="DEBUG: dump pickled feature vectors to file [default: don't]", default=False)
 
@@ -144,7 +145,7 @@ if __name__ == '__main__':
         mode = validate_args_model_choice(args)
         logging.info("Running quality prediction workflow with {} threads.".format(args.threads))
         predictor = predictQuality.Predictor(args.genome_fasta_directory, args.output_directory, args.extension, args.threads, args.force, args.lowmem)
-        predictor.prediction_wf(args.genes, mode, args.dbg_cos, args.dbg_vectors)
+        predictor.prediction_wf(args.genes, mode, args.dbg_cos, args.dbg_vectors, args.stdout)
 
 
     elif args.subparser_name == 'testrun':
@@ -158,7 +159,7 @@ if __name__ == '__main__':
 
         with tempfile.TemporaryDirectory() as temp_out_dir:
             predictor = predictQuality.Predictor(DefaultValues.TESTRUN_GENOMES, temp_out_dir, '.tst', args.threads, False, args.lowmem)
-            predictor.prediction_wf(False, 'auto', True)
+            predictor.prediction_wf(False, 'auto', False, False, False)
 
             results = pd.read_csv(os.path.join(temp_out_dir, 'quality_report.tsv'), sep='\t')
             if len(results) > 1:
