@@ -79,7 +79,7 @@ class DiamondRunner():
                       "--db {} " \
                       "--query-cover {} " \
                       "--subject-cover {} " \
-                      "--id {} --block-size 0.5 " \
+                      "--id {} " \
                       "--evalue {} --block-size {} "\
                       "--tmpdir {} --quiet "\
                     .format(temp_diamond_input.name,
