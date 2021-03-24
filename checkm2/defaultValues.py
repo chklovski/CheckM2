@@ -1,16 +1,15 @@
 import os
 from pathlib import Path
-import pkg_resources
+
 
 class DefaultValues():
     """Default values for filenames and common constants."""
-    DATA_PATH = pkg_resources.resource_filename('checkm2', 'data/')
-    MODEL_PATH = pkg_resources.resource_filename('checkm2', 'models/')
-    VERSION_PATH = pkg_resources.resource_filename('checkm2', 'version/')
-    TESTRUN_GENOMES = pkg_resources.resource_filename('checkm2', 'testrun/')
+    DATA_PATH =  os.path.join(os.path.dirname(__file__), 'data')
+    MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models')
+    VERSION_PATH = os.path.join(os.path.dirname(__file__), 'version')
+    TESTRUN_GENOMES = os.path.join(os.path.dirname(__file__), 'testrun')
 
     PRODIGAL_FOLDER_NAME = 'protein_files'
-#    TESTRUN_GENOMES =  os.path.join(DATA_PATH, 'testrun')
 
     #LOGNAME = 'log.txt'
 
