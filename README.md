@@ -1,6 +1,10 @@
 # CheckM2
 Rapid assessment of genome bins quality using machine learning. 
 
+# Usage
+
+#### Low memory mode
+If you are running CheckM2 on a device with limited RAM, you can use the --lowmem option to reduce DIAMOND RAM use by half at the expense of longer runtime. 
 
 # Run without installing
 
