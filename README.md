@@ -6,15 +6,14 @@ Rapid assessment of genome bins quality using machine learning.
 #### Bin quality prediction
 The main use of CheckM2 is likely going to be the prediction of the completeness and contamination of genomic bins. 
 
-You can give it a folder with fasta files using `--genome_fasta_directory` and direct its output with `--output-directory`:
+You can give it a folder with fasta files using `--genome-fasta-directory` and direct its output with `--output-directory`:
 ```
-checkm2 predict --genome_fasta_directory <folder_with_bins> --threads 30 --output-directory <output_folder> 
+checkm2 predict --genome-fasta-directory <folder_with_bins> --threads 30 --output-directory <output_folder> 
 ```
 
 If you already have predicted protein files (ideally using prodigal), you can pass the folder checkm2 using `--genes` option and set the file extension using `--extension`.
 
-By default, the output folder will have a `quality_report.tsv` file containing the completeness and contamination information.
-You can also print the output by passing the `--stdout` option to `checkm predict`.
+By default, the output folder will have a tab-delimited file `quality_report.tsv` containing the completeness and contamination information for each bin. You can also print the results to stdout by passing the `--stdout` option to `checkm predict`.
 
 #### Low memory mode
 If you are running CheckM2 on a device with limited RAM, you can use the --lowmem option to reduce DIAMOND RAM use by half at the expense of longer runtime. 
