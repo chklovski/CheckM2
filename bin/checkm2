@@ -40,6 +40,7 @@ if __name__ == '__main__':
     parent_parser.add_argument('--debug', help='output debug information', action="store_true")
     parent_parser.add_argument('--version', help='output version information and quit',  action='version', version=__version__)
     parent_parser.add_argument('--quiet', help='only output errors', action="store_true")
+    parent_parser.add_argument('--lowmem', help='Low memory mode. Reduces DIAMOND blocksize to significantly reduce RAM usage at the expense of longer runtime', action="store_true", default=False)
 
 
     parser = argparse.ArgumentParser(parents=[parent_parser])
@@ -142,7 +143,7 @@ if __name__ == '__main__':
     if args.subparser_name == 'predict':
         mode = validate_args_model_choice(args)
         logging.info("Running quality prediction workflow with {} threads.".format(args.threads))
-        predictor = predictQuality.Predictor(args.genome_fasta_directory, args.output_directory, args.extension, args.threads, args.force)
+        predictor = predictQuality.Predictor(args.genome_fasta_directory, args.output_directory, args.extension, args.threads, args.force, args.lowmem)
         predictor.prediction_wf(args.genes, mode, args.dbg_cos, args.dbg_vectors)
 
 
@@ -156,7 +157,7 @@ if __name__ == '__main__':
             sys.exit(1)
 
         with tempfile.TemporaryDirectory() as temp_out_dir:
-            predictor = predictQuality.Predictor(DefaultValues.TESTRUN_GENOMES, temp_out_dir, '.tst', args.threads, False)
+            predictor = predictQuality.Predictor(DefaultValues.TESTRUN_GENOMES, temp_out_dir, '.tst', args.threads, False, args.lowmem)
             predictor.prediction_wf(False, 'auto', True)
 
             results = pd.read_csv(os.path.join(temp_out_dir, 'quality_report.tsv'), sep='\t')

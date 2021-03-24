@@ -23,7 +23,7 @@ logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
 
 class Predictor():
-    def __init__(self, bin_folder, outdir, bin_extension='.fna', threads=1, overwrite=False):
+    def __init__(self, bin_folder, outdir, bin_extension='.fna', threads=1, overwrite=False, lowmem=False):
 
         self.bin_folder = bin_folder
         self.bin_extension = bin_extension
@@ -32,6 +32,10 @@ class Predictor():
         self.output_folder = outdir
         self.prodigal_folder = os.path.join(self.output_folder, DefaultValues.PRODIGAL_FOLDER_NAME)
         fileManager.make_sure_path_exists(self.prodigal_folder)
+        
+        self.lowmem = lowmem
+        if self.lowmem:
+          logging.info('Running in low-memory mode.')
 
 
         self.total_threads = threads
@@ -92,7 +96,7 @@ class Predictor():
 
         ''' 3: Determine all KEGG annotations of input genomes using DIAMOND blastp'''
 
-        diamond_search = diamond.DiamondRunner(self.total_threads, self.output_folder)
+        diamond_search = diamond.DiamondRunner(self.total_threads, self.output_folder, self.lowmem)
         diamond_out = diamond_search.run(prodigal_files)
         parsed_diamond_results, ko_list_length = diamond_search.process_diamond_output(diamond_out)
 

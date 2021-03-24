@@ -16,7 +16,7 @@ import pandas as pd
 
 class DiamondRunner():
 
-    def __init__(self, threads, output_directory):
+    def __init__(self, threads, output_directory, lowmem):
         self.threads = threads
 
         self.chunksize = DefaultValues.DIAMOND_DEFAULT_CHUNK_SIZE
@@ -25,6 +25,10 @@ class DiamondRunner():
         self.subject_cover = DefaultValues.DIAMOND_SUBJECT_COVER
         self.id = DefaultValues.DIAMOND_PERCENT_ID
         self.separator = DefaultValues.DIAMOND_HEADER_SEPARATOR
+        if lowmem:
+            self.blocksize = 0.5
+        else:
+            self.blocksize = 2
 
         self.check_for_diamond()
         self.diamond_out = os.path.join(output_directory, "diamond_output")
@@ -75,8 +79,8 @@ class DiamondRunner():
                       "--db {} " \
                       "--query-cover {} " \
                       "--subject-cover {} " \
-                      "--id {} " \
-                      "--evalue {} "\
+                      "--id {} --block-size 0.5 " \
+                      "--evalue {} --block-size {} "\
                       "--tmpdir {} --quiet "\
                     .format(temp_diamond_input.name,
                             diamond_output,
@@ -86,6 +90,7 @@ class DiamondRunner():
                             DefaultValues.DIAMOND_SUBJECT_COVER,
                             DefaultValues.DIAMOND_PERCENT_ID,
                             DefaultValues.DIAMOND_EVALUE,
+                            float(self.blocksize),
                             diamond_working_dir.name)
 
                 logging.debug(cmd)
