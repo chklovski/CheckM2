@@ -68,7 +68,7 @@ class Predictor():
 
         return sorted(bin_files)
 
-    def prediction_wf(self, genes_supplied=False, model_chosen='auto', debug_cos=False, dumpvectors=False):
+    def prediction_wf(self, genes_supplied=False, model_chosen='auto', debug_cos=False, dumpvectors=False, stdout=False):
 
         ''' 1: Call genes and automatically determine coding table'''
 
@@ -178,6 +178,9 @@ class Predictor():
         logging.info('CheckM2 finished successfully.')
         final_file = os.path.join(self.output_folder, 'quality_report.tsv')
         final_results.to_csv(final_file, sep='\t', index=False)
+        
+        if stdout:
+            print(final_results.to_string(index=False))
 
     def __set_up_prodigal_thread(self, queue_in, queue_out, used_ttable):
 
