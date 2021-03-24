@@ -16,15 +16,9 @@ Create an appropriate conda environment with prerequisites using the `checkm2.ym
 conda env create -n checkm2 -f checkm2.yml
 conda activate checkm2
 ```
-Finally, run CheckM2 via python:
 
+Finally, run CheckM2:
 ```
-python bin/checkm2 -h
-```
-or make it executable:
-
-```
-chmod +x bin/checkm2
 bin/checkm2 -h
 ```
 
