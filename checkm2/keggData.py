@@ -3,6 +3,7 @@ from checkm2.defaultValues import DefaultValues
 
 import json
 import pandas as pd
+pd.options.mode.chained_assignment = None  # default='warn'
 
 
 class KeggCalculator:
@@ -37,7 +38,7 @@ class KeggCalculator:
     def calculate_KO_group(self, group, KO_gene_data):
 
         #only interested in presence/absence; also exclude names (last column)
-        presence_absence_subset = KO_gene_data.iloc[:, :-1]
+        presence_absence_subset = KO_gene_data.iloc[:, :-1].copy()
         presence_absence_subset[presence_absence_subset > 1] = 1
 
         #get ordered sequence for each feature vector in group
@@ -57,11 +58,9 @@ class KeggCalculator:
 
     '''Module calculations differ from others as one gene can be part of multiple modules'''
 
-    #TODO: make every calculation of this format, maybe make method exposed while calling internal generic calc
-
 
     def calculate_module_completeness(self, KO_gene_data):
-        presence_absence_subset = KO_gene_data.iloc[:, :-1]
+        presence_absence_subset = KO_gene_data.iloc[:, :-1].copy()
         presence_absence_subset[presence_absence_subset > 1] = 1
 
         modules = list(self.module_definitions.keys())

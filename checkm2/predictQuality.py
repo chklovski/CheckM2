@@ -180,7 +180,7 @@ class Predictor():
         final_results.to_csv(final_file, sep='\t', index=False)
         
         if stdout:
-            print(final_results.to_string(index=False))
+            print(final_results.to_string(index=False, float_format=lambda x: '%.2f' % x))
 
     def __set_up_prodigal_thread(self, queue_in, queue_out, used_ttable):
 

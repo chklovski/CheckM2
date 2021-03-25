@@ -56,7 +56,7 @@ class DiamondDB:
             #great - let's set it
             diamond_definition = self.__get_db_file()
 
-            diamond_definition['DBPATH'] = provided_location
+            diamond_definition['DBPATH'] = os.path.abspath(provided_location)
             with open(DefaultValues.DB_LOCATION_DEFINITION, 'w') as dd:
                 json.dump(diamond_definition, dd)
 
@@ -126,7 +126,7 @@ class DiamondDB:
                     shutil.copyfileobj(f_in, f_out)
             os.remove(zipped_db)
 
-            diamond_definition['DBPATH'] = diamond_loc_final
+            diamond_definition['DBPATH'] = os.path.abspath(diamond_loc_final)
             with open(diamond_location, 'w') as dd:
                 json.dump(diamond_definition, dd)
         else:
