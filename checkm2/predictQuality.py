@@ -98,7 +98,8 @@ class Predictor():
 
         diamond_search = diamond.DiamondRunner(self.total_threads, self.output_folder, self.lowmem)
         diamond_out = diamond_search.run(prodigal_files)
-        parsed_diamond_results, ko_list_length = diamond_search.process_diamond_output(diamond_out)
+
+        parsed_diamond_results, ko_list_length = diamond_search.process_diamond_output(diamond_out, metadata_df['Name'].values)
 
         parsed_diamond_results.sort_values(by='Name', inplace=True)
         metadata_df.sort_values(by='Name', inplace=True)
@@ -128,8 +129,8 @@ class Predictor():
 
         ''' 5: Determine any substantially complete genomes similar to reference genomes and fine-tune predictions'''
 
-        if model_chosen == 'auto' or debug_cos is True:
-            logging.info('Fine-tuning results using reference data.')
+        if not model_chosen == 'specific' or not model_chosen == 'general':
+            logging.info('Using cosine simlarity to reference data to select appropriate predictor model.')
 
             postProcessor = modelPostprocessing.modelProcessor(self.total_threads)
             final_comp, final_cont, models_chosen, csm_array = postProcessor.calculate_general_specific_ratio(
@@ -143,33 +144,34 @@ class Predictor():
 
         final_results = feature_vectors[['Name']].copy()
         if model_chosen == 'both':
-            final_results['Completeness General'] = np.round(general_results_comp, 2)
-            final_results['Contamination General'] = np.round(general_results_cont, 2)
-            final_results['Completeness Specific'] = np.round(specific_results_comp, 2)
-            final_results['Contamination Specific'] = np.round(specific_results_cont, 2)
+            final_results['Completeness_General'] = np.round(general_results_comp, 2)
+            final_results['Contamination_General'] = np.round(general_results_cont, 2)
+            final_results['Completeness_Specific'] = np.round(specific_results_comp, 2)
+            final_results['Contamination_Specific'] = np.round(specific_results_cont, 2)
+            final_results['Model_Used'] = models_chosen
 
         elif model_chosen == 'auto':
             final_results['Completeness'] = np.round(final_comp, 2)
             final_results['Contamination'] = np.round(final_cont, 2)
-            final_results['Model Used'] = models_chosen
+            final_results['Model_Used'] = models_chosen
 
         elif model_chosen == 'general':
-            final_results['Completeness General'] = np.round(general_results_comp, 2)
-            final_results['Contamination General'] = np.round(general_results_cont, 2)
+            final_results['Completeness_General'] = np.round(general_results_comp, 2)
+            final_results['Contamination_General'] = np.round(general_results_cont, 2)
 
         elif model_chosen == 'specific':
-            final_results['Completeness Specific'] = np.round(specific_results_comp, 2)
-            final_results['Contamination Specific'] = np.round(specific_results_cont, 2)
+            final_results['Completeness_Specific'] = np.round(specific_results_comp, 2)
+            final_results['Contamination_Specific'] = np.round(specific_results_cont, 2)
 
         else:
             logging.error('Programming error in model choice')
             sys.exit(1)
 
         if not genes_supplied:
-            final_results['Translation Table Used'] = final_results['Name'].apply(lambda x: used_ttables[x])
+            final_results['Translation_Table Used'] = final_results['Name'].apply(lambda x: used_ttables[x])
 
         if debug_cos is True:
-            final_results['Cosine Similarity'] = np.round(csm_array, 2)
+            final_results['Cosine_Similarity'] = np.round(csm_array, 2)
 
         if dumpvectors:
             dumpfile = os.path.join(self.output_folder, 'feature_vectors.npy')

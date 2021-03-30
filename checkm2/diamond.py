@@ -134,7 +134,7 @@ class DiamondRunner():
 
 
 
-    def process_diamond_output(self, diamond_out_list):
+    def process_diamond_output(self, diamond_out_list, full_name_list):
 
 
         logging.info('Processing DIAMOND output')
@@ -159,7 +159,7 @@ class DiamondRunner():
 
         #Update counts per genome
         kegg_genome_list = []
-        for genome in results['GenomeName'].unique():
+        for genome in full_name_list:
             diamond_KO_subset = results[results['GenomeName'] == genome]['Kegg_annotation'].value_counts()
             sub_dict = defaultKOs.copy()
             sub_dict['Name'] = genome

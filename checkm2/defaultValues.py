@@ -50,4 +50,4 @@ class DefaultValues():
                                 SPECIFIC_MODEL_CONT_LOCATION, SCALER_FILE_LOCATION, REF_DATA_LOCATION]
 
     #Anything below this is general-model determined
-    COSINE_SIMILARITY_SPECIFIC_MODEL_CUTOFF = 0.75
+    COSINE_SIMILARITY_SPECIFIC_MODEL_CUTOFF = 0.775
