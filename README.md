@@ -3,7 +3,7 @@ Rapid assessment of genome bins quality using machine learning.
 
 Unlike CheckM1, CheckM2 has universally trained machine learning models it applies regardless of taxonomic lineage to predict completeness/contamination of genomic bins. This allows it to incorporate many lineages in its training set that have few - or even just one - high-quality genomic representatives, by putting it in the context of all other organisms in the training set. As a result, CheckM2 is also highly accurate on organisms with reduced genomes or unusual biology, such as the Nanoarchaeota or Patescibacteria. 
 
-CheckM2 uses two distinct machine learning models to predict genome quality. The 'general' gradient boost model is able to generalize well and is intended to be used on novel organisms/those not represented in RefSeq (roughly - better when at the level of novel Order, Class or Phylum). The 'specific' neural network model is much more accurate when prediction completeness or contamination of organisms closer related to the reference training set (roughly - better when at the level of novel Species, Genus or Family).
+CheckM2 uses two distinct machine learning models to predict genome quality. The 'general' gradient boost model is able to generalize well and is intended to be used on novel organisms/those not represented in RefSeq (roughly - better when at the level of novel Order, Class or Phylum). The 'specific' neural network model is much more accurate when predicting completeness or contamination of organisms closer related to the reference training set (roughly - better when at the level of novel Species, Genus or Family).
 
 CheckM2 uses a cosine similarity calculation to automatically determine the appropriate model for each input genome, but you can also force the use of a particular model, or get the prediction outputs for both. 
 
@@ -17,7 +17,7 @@ You can give it a folder with fasta files using `--genome-fasta-directory` and d
 checkm2 predict --genome-fasta-directory <folder_with_bins> --threads 30 --output-directory <output_folder> 
 ```
 
-If you already have predicted protein files (ideally using prodigal), you can pass the folder checkm2 using `--genes` option and set the file extension using `--extension`.
+If you already have predicted protein files (ideally using prodigal), you can pass the folder checkm2 with an additional `--genes` option and set the file extension using `--extension`.
 
 By default, the output folder will have a tab-delimited file `quality_report.tsv` containing the completeness and contamination information for each bin. You can also print the results to stdout by passing the `--stdout` option to `checkm predict`.
 
