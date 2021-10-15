@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
+from checkm2 import version
+
 __author__ = "Alex Chklovski"
-__version__ = "0.0.1"
+__version__ = version.__version__
 __maintainer__ = "Alex Chklovski"
 __email__ = "chklovski near gmail.com"
 __status__ = "Development"
@@ -98,7 +100,7 @@ if __name__ == '__main__':
     download_parser = new_subparser(subparsers, 'database', download_description)
     action  = download_parser.add_mutually_exclusive_group(required=True)
     action.add_argument('--download', help="Download DIAMOND database. By default installs into [{}]".format(DefaultValues.DEFAULT_DB_INSTALL_LOCATION), action='store_true')
-    action.add_argument('--dblocation', help="Point CheckM2 to the DIAMOND database location if already downloaded.")
+    action.add_argument('--setdblocation', help="Point CheckM2 to the DIAMOND database location if already downloaded.")
     action.add_argument('--current',  action='store_true', help="Print where current database is installed.")
     download_parser.add_argument('--path', help='Custom path for downloading and installing database file.', default=DefaultValues.DEFAULT_DB_INSTALL_LOCATION)
 
@@ -170,8 +172,8 @@ if __name__ == '__main__':
 
     elif args.subparser_name == 'database':
 
-        if args.dblocation:
-            fileManager.DiamondDB().set_DB_location(args.dblocation)
+        if args.setdblocation:
+            fileManager.DiamondDB().set_DB_location(args.setdblocation)
         elif args.download:
             fileManager.DiamondDB().download_database(args.path)
         elif args.current:
