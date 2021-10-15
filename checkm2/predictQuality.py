@@ -41,9 +41,9 @@ class Predictor():
         self.total_threads = threads
 
         logging.debug('Verifying internal checksums for all models, scalers and reference data.')
-        if VersionControl().checksum_version_validate() is False:
-            logging.error('Could not verify internal model checksums. Please re-download CheckM2.')
-            sys.exit(1)
+        #if VersionControl().checksum_version_validate() is False:
+        #    logging.error('Could not verify internal model checksums. Please re-download CheckM2.')
+        #    sys.exit(1)
 
         logging.debug('Verifying DIAMOND DB installation path.')
         #currently unused
@@ -124,8 +124,7 @@ class Predictor():
             metadata_order)) - 1  # -1 = without name TODO a bit ugly - maybe just calculate length on setup somewhere
 
         # also retrieve scaled data for CSM calculations
-        specific_results_comp, specific_results_cont, scaled_features = modelProc.run_prediction_specific(vector_array,
-                                                                                                          specific_model_vector_len)
+        specific_results_comp, scaled_features = modelProc.run_prediction_specific(vector_array, specific_model_vector_len)
 
         ''' 5: Determine any substantially complete genomes similar to reference genomes and fine-tune predictions'''
 
@@ -134,34 +133,33 @@ class Predictor():
 
             postProcessor = modelPostprocessing.modelProcessor(self.total_threads)
             final_comp, final_cont, models_chosen, csm_array = postProcessor.calculate_general_specific_ratio(
+                vector_array[:, 20], 
                 scaled_features,
                 general_results_comp,
                 general_results_cont,
-                specific_results_comp,
-                specific_results_cont)
+                specific_results_comp)
 
         logging.info('Parsing all results and constructing final output table.')
 
         final_results = feature_vectors[['Name']].copy()
         if model_chosen == 'both':
             final_results['Completeness_General'] = np.round(general_results_comp, 2)
-            final_results['Contamination_General'] = np.round(general_results_cont, 2)
+            final_results['Contamination'] = np.round(general_results_cont, 2)
             final_results['Completeness_Specific'] = np.round(specific_results_comp, 2)
-            final_results['Contamination_Specific'] = np.round(specific_results_cont, 2)
-            final_results['Model_Used'] = models_chosen
+            final_results['Completeness_Model_Used'] = models_chosen
 
         elif model_chosen == 'auto':
             final_results['Completeness'] = np.round(final_comp, 2)
             final_results['Contamination'] = np.round(final_cont, 2)
-            final_results['Model_Used'] = models_chosen
+            final_results['Completeness_Model_Used'] = models_chosen
 
         elif model_chosen == 'general':
             final_results['Completeness_General'] = np.round(general_results_comp, 2)
-            final_results['Contamination_General'] = np.round(general_results_cont, 2)
+            final_results['Contamination'] = np.round(general_results_cont, 2)
 
         elif model_chosen == 'specific':
             final_results['Completeness_Specific'] = np.round(specific_results_comp, 2)
-            final_results['Contamination_Specific'] = np.round(specific_results_cont, 2)
+            final_results['Contamination'] = np.round(general_results_cont, 2)
 
         else:
             logging.error('Programming error in model choice')
@@ -174,8 +172,8 @@ class Predictor():
             final_results['Cosine_Similarity'] = np.round(csm_array, 2)
 
         if dumpvectors:
-            dumpfile = os.path.join(self.output_folder, 'feature_vectors.npy')
-            np.save(dumpfile, scaled_features)
+            dumpfile = os.path.join(self.output_folder, 'feature_vectors.pkl')
+            feature_vectors.to_pickle(dumpfile, protocol=4)
 
         logging.info('CheckM2 finished successfully.')
         final_file = os.path.join(self.output_folder, 'quality_report.tsv')

@@ -1,13 +1,5 @@
 #!/usr/bin/env python
 
-from checkm2 import version
-
-__author__ = "Alex Chklovski"
-__version__ = version.__version__
-__maintainer__ = "Alex Chklovski"
-__email__ = "chklovski near gmail.com"
-__status__ = "Development"
-
 import argparse
 from argparse import RawTextHelpFormatter
 import sys
@@ -17,6 +9,14 @@ import pandas as pd
 import os
 
 sys.path = [os.path.join(os.path.dirname(os.path.realpath(__file__)),'..')] + sys.path
+
+from checkm2 import version
+
+__author__ = "Alex Chklovski"
+__version__ = version.__version__
+__maintainer__ = "Alex Chklovski"
+__email__ = "chklovski near gmail.com"
+__status__ = "Development"
 
 from checkm2.defaultValues import DefaultValues
 from checkm2.versionControl import VersionControl
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     download_description = 'Download/set up required diamond database for CheckM2. Example usage: \n\n ' \
                            '\tcheckm2 database --download (downloads database into /home/user/databases)\n ' \
                            '\tcheckm2 database --download --path /path/to/custom_location  (downloads database into specified folder)\n ' \
-                           '\tcheckm2 database --dblocation /path/to/downloaded_database_file (uses specified database file as DB) \n\n ' \
+                           '\tcheckm2 database --setdblocation /path/to/downloaded_database_file (uses specified database file as DB) \n\n ' \
                            'Alternatively, add an existing DIAMOND DB file to path: "export CHECKM2DB=/path/to/database/"\n\n'
 
     predict_parser = new_subparser(subparsers, 'predict', predict_description)

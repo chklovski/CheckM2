@@ -10,6 +10,7 @@ import tempfile
 
 from checkm2 import versionControl
 from checkm2.defaultValues import DefaultValues
+from checkm2 import zenodo_backpack
 
 class DiamondDB:
     def __init__(self):
@@ -68,18 +69,13 @@ class DiamondDB:
 
 
     def download_database(self, download_location):
-        '''Very basic: To be developed further. Should check for newest version + also check CheckM2 version maybe.
-        Should also be integrated into Zenodo API instead of just requesting as a link. Also resume/timeout.'''
+
+        '''Uses a DOI link to automatically download, unpack and verify from zenodo.org'''
 
         logging.info("Command: Download database. Checking internal path information.")
-        make_sure_path_exists(os.path.join(download_location))
-
-
-        highest_compatible_version = versionControl.VersionControl().return_highest_compatible_DB_version()
-        download_link = 'https://zenodo.org/record/4626519/files/uniref100.KO.v{}.dmnd.gz'.format(highest_compatible_version)
-        logging.info('Downloading from: {}'.format(download_link))
 
         diamond_location = DefaultValues.DB_LOCATION_DEFINITION
+        
         try:
             with open(diamond_location) as f:
                 diamond_definition = json.load(f)
@@ -96,9 +92,14 @@ class DiamondDB:
                 sys.exit(1)
         if diamond_definition['DBPATH'] != 'Not Set':
             logging.warning('DIAMOND database found at {}. Overwriting previous database.'.format(diamond_definition['DBPATH']))
-
-        zipped_db = os.path.join(download_location, 'uniref100.KO.{}.dmnd.gz'.format(highest_compatible_version))
+            
+        
         make_sure_path_exists(os.path.join(download_location, 'CheckM2_database'))
+        
+        backpack_downloader = zenodo_backpack.zenodo_backpack_downloader('INFO')
+        highest_compatible_version, DOI = versionControl.VersionControl().return_highest_compatible_DB_version()
+
+        
         diamond_loc_final = os.path.join(download_location, 'CheckM2_database', 'uniref100.KO.{}.dmnd'.format(highest_compatible_version))
 
         if download_location is not None:
@@ -111,24 +112,10 @@ class DiamondDB:
                 logging.error("You do not appear to have permission to write to {}. Please choose a different directory"
                               .format(download_location))
                 sys.exit(1)
+            
+            backpack_downloader.download_and_extract(download_location, DOI, progress_bar=True, no_check_version=False)
+            diamond_location = DefaultValues.DB_LOCATION_DEFINITION
 
-            logging.info('Downloading to: {}'.format(download_location))
-
-            try:
-                r = requests.get(download_link, allow_redirects=True)
-                open(zipped_db, 'wb').write(r.content)
-            except Exception as e:
-                logging.error('Failed to download database due to error: {}'.format(e))
-                sys.exit(1)
-            logging.info('Unpacking DIAMOND Database.')
-            with gzip.open(zipped_db, 'rb') as f_in:
-                with open(diamond_loc_final, 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
-            os.remove(zipped_db)
-
-            diamond_definition['DBPATH'] = os.path.abspath(diamond_loc_final)
-            with open(diamond_location, 'w') as dd:
-                json.dump(diamond_definition, dd)
         else:
             logging.info('Failed to determine download location')
             sys.exit(1)

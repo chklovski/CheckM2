@@ -68,7 +68,7 @@ class VersionControl():
         DB_version['Valid'] = DB_version.apply(
             lambda row: self.__validateVersion(row['version'], row['incompatible_below_checkm2ver']), axis=1)
 
-        return DB_version[DB_version['Valid'] == True]['version'].values[0]
+        return DB_version[DB_version['Valid'] == True]['version'].values[0], DB_version[DB_version['Valid'] == True]['DOI'].values[0]
 
 
     def checksum_version_validate(self):

@@ -21,6 +21,8 @@ class DefaultValues():
     DIAMOND_DEFAULT_CHUNK_SIZE = 500
 
     DIAMOND_HEADER_SEPARATOR = 'Ω'
+    
+    AA_RATIO_COMPLETENESS_CUTOFF = 1500
 
 
     DB_LOCATION_DEFINITION = os.path.join(VERSION_PATH, 'diamond_path.json')
@@ -35,19 +37,18 @@ class DefaultValues():
     PATH_CATEGORY_MAPPING_LOCATION = os.path.join(DATA_PATH, 'kegg_path_category_mapping.json')
     MODULE_DEFINITION_LOCATION = os.path.join(DATA_PATH, 'module_definitions.json')
 
-    GENERAL_MODEL_COMP_LOCATION = os.path.join(MODEL_PATH, 'general_model_COMP.MODEL')
+    GENERAL_MODEL_COMP_LOCATION = os.path.join(MODEL_PATH, 'general_model_COMP.gbm')
     SPECIFIC_MODEL_COMP_LOCATION = os.path.join(MODEL_PATH, 'specific_model_COMP.hd5')
 
-    GENERAL_MODEL_CONT_LOCATION = os.path.join(MODEL_PATH, 'general_model_CONT.MODEL')
-    SPECIFIC_MODEL_CONT_LOCATION = os.path.join(MODEL_PATH, 'specific_model_CONT.hd5')
+    MODEL_CONT_LOCATION = os.path.join(MODEL_PATH, 'model_CONT.gbm')
+#    SPECIFIC_MODEL_CONT_LOCATION = os.path.join(MODEL_PATH, 'specific_model_CONT.hd5')
 
     SCALER_FILE_LOCATION = os.path.join(MODEL_PATH, 'scaler.sav')
+    COSINE_TABLE_LOCATION = os.path.join(MODEL_PATH, 'cosine_table.pkl')
     REF_DATA_LOCATION = os.path.join(DATA_PATH, 'min_ref_rsdata_v1.npz')
 
     EXTERNAL_FILES_TO_VERIFY = [FEATURE_ORDER_LOCATION, PATH_CATEGORY_MAPPING_LOCATION,
                                 MODULE_DEFINITION_LOCATION, GENERAL_MODEL_COMP_LOCATION,
-                                SPECIFIC_MODEL_COMP_LOCATION, GENERAL_MODEL_CONT_LOCATION,
-                                SPECIFIC_MODEL_CONT_LOCATION, SCALER_FILE_LOCATION, REF_DATA_LOCATION]
+                                SPECIFIC_MODEL_COMP_LOCATION, MODEL_CONT_LOCATION,
+                                SCALER_FILE_LOCATION, REF_DATA_LOCATION, COSINE_TABLE_LOCATION]
 
-    #Anything below this is general-model determined
-    COSINE_SIMILARITY_SPECIFIC_MODEL_CUTOFF = 0.775

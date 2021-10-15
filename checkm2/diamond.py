@@ -140,6 +140,10 @@ class DiamondRunner():
         logging.info('Processing DIAMOND output')
         #concatenate all results even if only one
         results = pd.concat([pd.read_csv(os.path.join(self.diamond_out, entry), sep='\t', usecols=[0, 1], names=['header', 'annotation']) for entry in diamond_out_list])
+        
+        if len(results) < 1:
+          logging.error('No DIAMOND annotation was generated. Exiting')
+          sys.exit(1)
 
         #Split columns into usable series
         results[['GenomeName', 'ProteinID']] = results['header'].str.split(self.separator, 1, expand=True)
