@@ -1,11 +1,11 @@
 # CheckM2
 Rapid assessment of genome bins quality using machine learning. 
 
-Unlike CheckM1, CheckM2 has universally trained machine learning models it applies regardless of taxonomic lineage to predict completeness/contamination of genomic bins. This allows it to incorporate many lineages in its training set that have few - or even just one - high-quality genomic representatives, by putting it in the context of all other organisms in the training set. As a result, CheckM2 is also highly accurate on organisms with reduced genomes or unusual biology, such as the Nanoarchaeota or Patescibacteria. 
+Unlike CheckM1, CheckM2 has universally trained machine learning models it applies regardless of taxonomic lineage to predict completeness/contamination of genomic bins. This allows it to incorporate many lineages in its training set that have few - or even just one - high-quality genomic representatives, by putting it in the context of all other organisms in the training set. As a result of the machine learning framework, CheckM2 is also highly accurate on organisms with reduced genomes or unusual biology, such as the Nanoarchaeota or Patescibacteria. 
 
-CheckM2 uses two distinct machine learning models to predict genome quality. The 'general' gradient boost model is able to generalize well and is intended to be used on novel organisms/those not represented in RefSeq (roughly - better when at the level of novel Order, Class or Phylum). The 'specific' neural network model is much more accurate when predicting completeness or contamination of organisms closer related to the reference training set (roughly - better when at the level of novel Species, Genus or Family).
+CheckM2 uses two distinct machine learning models to predict genome completeness. The 'general' gradient boost model is able to generalize well and is intended to be used on novel organisms/those not represented in RefSeq (roughly - better when at the level of novel Order, Class or Phylum). The 'specific' neural network model is much more accurate when predicting completeness of organisms closer related to the reference training set (roughly - better when at the level of novel Species, Genus or Family). There is only one contamination model (based on gradient boost) which is applied regardless of taxonomic novelty and works well across all cases. 
 
-CheckM2 uses a cosine similarity calculation to automatically determine the appropriate model for each input genome, but you can also force the use of a particular model, or get the prediction outputs for both. 
+CheckM2 uses a cosine similarity calculation to automatically determine the appropriate model for each input genome, but you can also force the use of a particular completeness model, or get the prediction outputs for both. 
 
 # Usage
 
