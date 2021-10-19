@@ -12,10 +12,16 @@ CheckM2 uses a cosine similarity calculation to automatically determine the appr
 #### Bin quality prediction
 The main use of CheckM2 is likely going to be the prediction of the completeness and contamination of genomic bins. 
 
-You can give it a folder with fasta files using `--genome-fasta-directory` and direct its output with `--output-directory`:
+You can give it a folder with fasta files using `--input` and direct its output with `--output-directory`:
 ```
-checkm2 predict --genome-fasta-directory <folder_with_bins> --threads 30 --output-directory <output_folder> 
+checkm2 predict --input <folder_with_bins> --threads 30 --output-directory <output_folder> 
 ```
+
+CheckM2 can also take a list of files in its `--input` parameter. It will work out automatically if it was given a folder or a list of files and process accordingly, taking care of any file extensions in the process:
+```
+checkm2 predict --input `../bin1.fa ../../bin2.fna /some/other/directory/bin3.fasta` --threads 30 --output-directory <output_folder> 
+```
+
 
 If you already have predicted protein files (ideally using prodigal), you can pass the folder checkm2 with an additional `--genes` option and set the file extension using `--extension`.
 
