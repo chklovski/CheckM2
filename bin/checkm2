@@ -151,6 +151,10 @@ if __name__ == '__main__':
                 predictor = predictQuality.Predictor(args.input[0], args.output_directory, args.extension, args.threads, args.force, args.lowmem)
                 predictor.prediction_wf(args.genes, mode, args.dbg_cos, args.dbg_vectors, args.stdout)
         else:
+            if args.genes:
+                bin_extension = '.faa'
+            else:
+                bin_extension = '.fna'
             # make folder to copy disparate bins into, then point to it as input folder
             # make them all one extension to make life easier
             fileManager.make_sure_path_exists(os.path.join(args.output_directory, 'input_bins'))
@@ -159,8 +163,8 @@ if __name__ == '__main__':
                 if os.stat(bin).st_size == 0:
                     logging.warning("Skipping bin {} as it has a size of 0 bytes.".format(f))
                 else:
-                    copyfile(bin, os.path.join(bin_temporary_dir.name, '{}.fna'.format(os.path.splitext(os.path.basename(bin))[0])))
-            predictor = predictQuality.Predictor(bin_temporary_dir.name, args.output_directory, args.extension, args.threads,
+                    copyfile(bin, os.path.join(bin_temporary_dir.name, '{}.{}'.format(os.path.splitext(os.path.basename(bin))[0], bin_extension)))
+            predictor = predictQuality.Predictor(bin_temporary_dir.name, args.output_directory, bin_extension, args.threads,
                                                  args.force, args.lowmem)
             predictor.prediction_wf(args.genes, mode, args.dbg_cos, args.dbg_vectors, args.stdout)
             bin_temporary_dir.cleanup()
