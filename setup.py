@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='CheckM2',
-    version='0.0.1',
+    version='0.1.1',
     packages=find_packages(),
     data_files=[('data', ['checkm2/data/feature_ordering.json', 'checkm2/data/kegg_path_category_mapping.json',
                           'checkm2/data/min_ref_rsdata_v1.npz', 'checkm2/data/module_definitions.json']),
