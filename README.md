@@ -19,7 +19,7 @@ checkm2 predict --input <folder_with_bins> --threads 30 --output-directory <outp
 
 CheckM2 can also take a list of files in its `--input` parameter. It will work out automatically if it was given a folder or a list of files and process accordingly, taking care of any file extensions in the process:
 ```
-checkm2 predict --input `../bin1.fa ../../bin2.fna /some/other/directory/bin3.fasta` --threads 30 --output-directory <output_folder> 
+checkm2 predict --input ../bin1.fa ../../bin2.fna /some/other/directory/bin3.fasta --threads 30 --output-directory <output_folder> 
 ```
 
 
