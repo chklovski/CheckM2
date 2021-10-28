@@ -66,7 +66,7 @@ if __name__ == '__main__':
                            '\tcheckm2 database --download (downloads database into /home/user/databases)\n ' \
                            '\tcheckm2 database --download --path /path/to/custom_location  (downloads database into specified folder)\n ' \
                            '\tcheckm2 database --setdblocation /path/to/downloaded_database_file (uses specified database file as DB) \n\n ' \
-                           'Alternatively, add an existing DIAMOND DB file to path: "export CHECKM2DB=/path/to/database/"\n\n'
+                           'Alternatively, add an existing DIAMOND DB file to path: "export CHECKM2DB=/path/to/database/database.dmnd"\n\n'
 
     predict_parser = new_subparser(subparsers, 'predict', predict_description)
 
