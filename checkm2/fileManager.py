@@ -16,6 +16,16 @@ class DiamondDB:
     def __init__(self):
         if DefaultValues.DB_VAR in os.environ:
             self.DATABASE_DIR = os.environ[DefaultValues.DB_VAR]
+            #Check if it's still there and if not, unset variable
+            if not os.path.exists(self.DATABASE_DIR):
+              logging.warning('Database not found using the environmental variable: {}. Please fix your $PATH. Using internal database path instead.'.format(DefaultValues.DB_VAR))
+
+              diamond_definition = self.__get_db_file()
+
+              if diamond_definition['DBPATH'] == 'Not Set':
+                self.DATABASE_DIR = 'Not Set'
+              else:
+                self.DATABASE_DIR = diamond_definition['DBPATH']
         else:
             diamond_definition = self.__get_db_file()
 
@@ -23,6 +33,7 @@ class DiamondDB:
                 self.DATABASE_DIR = 'Not Set'
             else:
                 self.DATABASE_DIR = diamond_definition['DBPATH']
+
 
     def __get_db_file(self):
         diamond_location = DefaultValues.DB_LOCATION_DEFINITION
