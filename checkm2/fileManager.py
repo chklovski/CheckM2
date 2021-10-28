@@ -111,7 +111,7 @@ class DiamondDB:
         highest_compatible_version, DOI = versionControl.VersionControl().return_highest_compatible_DB_version()
 
         
-        diamond_loc_final = os.path.join(download_location, 'CheckM2_database', 'uniref100.KO.{}.dmnd'.format(highest_compatible_version))
+        diamond_loc_final = os.path.join(download_location, 'CheckM2_database', 'uniref100.KO.1.dmnd')
 
         if download_location is not None:
             #check we have writing permission
@@ -125,7 +125,12 @@ class DiamondDB:
                 sys.exit(1)
             
             backpack_downloader.download_and_extract(download_location, DOI, progress_bar=True, no_check_version=False)
-            diamond_location = DefaultValues.DB_LOCATION_DEFINITION
+            
+            diamond_definition['DBPATH'] = os.path.abspath(diamond_loc_final)
+
+            with open(diamond_location, 'w') as dd:
+                json.dump(diamond_definition, dd)
+            
 
         else:
             logging.info('Failed to determine download location')
