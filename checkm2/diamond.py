@@ -49,7 +49,7 @@ class DiamondRunner():
 
         #next, confirm database is present
         self.diamond_location = fileManager.DiamondDB().get_DB_location()
-        if self.diamond_location == None or self.diamond_location == '':
+        if self.diamond_location == None or self.diamond_location == '' or self.diamond_location == 'Not Set':
             logging.error("Please download and install the CheckM2 database first (see 'checkm2 database -h')")
             sys.exit(1)
         fileManager.check_if_file_exists(self.diamond_location)
