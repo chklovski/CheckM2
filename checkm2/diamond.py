@@ -166,13 +166,19 @@ class DiamondRunner():
 
         #Update counts per genome
         kegg_genome_list = []
+        
+        annot_dict = dict(zip(sorted(results['GenomeName'].unique()), [x for _, x in results.groupby(results['GenomeName'])]))
+        
         for genome in full_name_list:
-            diamond_KO_subset = results[results['GenomeName'] == genome]['Kegg_annotation'].value_counts()
             sub_dict = defaultKOs.copy()
             sub_dict['Name'] = genome
-            sub_dict.update(diamond_KO_subset)
-            kegg_genome_list.append(sub_dict)
 
+            #valid diamond annotations found
+            if genome in annot_dict.keys():
+                diamond_KO_subset = annot_dict[genome]['Kegg_annotation'].value_counts()
+                sub_dict.update(diamond_KO_subset)
+            
+            kegg_genome_list.append(sub_dict)
 
         KO_genes = pd.DataFrame(kegg_genome_list)
 
