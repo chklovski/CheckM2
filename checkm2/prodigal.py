@@ -5,13 +5,14 @@ import subprocess
 import logging
 import numpy as np
 import shutil
+import gzip
+import tempfile
 
 from checkm2 import sequenceClasses
 from checkm2 import fileManager
 
-'''Prodigal module taken from CheckM1. Needs to be cleaned up a bit.'''
+'''Prodigal module taken from CheckM1.'''
 
-#TODO: decompress .gz fna files
 #TODO dont use meta mode for prodigal if a translation table was provided
 #TODO: take provided translation table
 
@@ -34,8 +35,15 @@ class ProdigalRunner():
     def run(self, query, bNucORFs=True):
 
         prodigal_input = query
-
-        # gather statistics about query file
+                  
+        # decompress archive input files                
+        if prodigal_input.endswith('.gz'):
+            tmp_dir = tempfile.mkdtemp()
+            prodigal_input = os.path.join(tmp_dir, os.path.basename(prodigal_input[0:-3]) + '.fna')  
+            with gzip.open(query, 'rb') as f_in:
+                with open(prodigal_input, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+                
         seqs = sequenceClasses.SeqReader().read_nucleotide_sequences(prodigal_input)
 
         totalBases = 0
