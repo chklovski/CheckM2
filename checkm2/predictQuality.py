@@ -15,6 +15,7 @@ import shutil
 import sys
 import logging
 import pandas as pd
+import tarfile
 
 # For unnessesary tensorflow warnings:
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -59,6 +60,8 @@ class Predictor():
                     binFile = os.path.join(self.bin_folder, f)
                     if os.stat(binFile).st_size == 0:
                         logging.warning("Skipping bin {} as it has a size of 0 bytes.".format(f))
+                    elif tarfile.is_tarfile(binFile):
+                      logging.warning('Skipping bin {} as tar archives are not supported.'.format(binFile))
                     else:
                         bin_files.append(binFile)
 
