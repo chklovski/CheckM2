@@ -170,13 +170,11 @@ if __name__ == '__main__':
                     if tarfile.is_tarfile(bin):
                         logging.warning('Skipping file {} as tar archives are not supported'.format(bin))
                     else:
+                        basename = os.path.splitext(os.path.basename(bin))[0]
                         #remove the .x.gz extension to have uniform labelling
                         if len(bin.split('.')) > 2:
                             pre_gz_prefix = '.{}'.format(bin.split('.')[-2])
-                        else:
-                            pre_gz_prefix = ''
-                        basename = os.path.splitext(os.path.basename(bin))[0]
-                        basename = basename.split(pre_gz_prefix)[0]
+                            basename = basename.split(pre_gz_prefix)[0]
                         with gzip.open(bin, 'rb') as f_in:
                             with open(os.path.join(bin_temporary_dir.name, '{}.{}'.format(basename, bin_extension)), 'wb') as f_out:
                                 shutil.copyfileobj(f_in, f_out)
