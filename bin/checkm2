@@ -4,10 +4,12 @@ import argparse
 from argparse import RawTextHelpFormatter
 import sys
 import logging
-from shutil import copyfile
+import shutil
 import tempfile
 import pandas as pd
 import os
+import gzip
+import tarfile
 
 sys.path = [os.path.join(os.path.dirname(os.path.realpath(__file__)),'..')] + sys.path
 
@@ -152,9 +154,9 @@ if __name__ == '__main__':
                 predictor.prediction_wf(args.genes, mode, args.dbg_cos, args.dbg_vectors, args.stdout)
         else:
             if args.genes:
-                bin_extension = '.faa'
+                bin_extension = 'faa'
             else:
-                bin_extension = '.fna'
+                bin_extension = 'fna'
             # make folder to copy disparate bins into, then point to it as input folder
             # make them all one extension to make life easier
             fileManager.make_sure_path_exists(os.path.join(args.output_directory, 'input_bins'))
@@ -164,8 +166,22 @@ if __name__ == '__main__':
                     logging.warning("Skipping bin {} as it has a size of 0 bytes.".format(f))
                 elif os.path.isdir(bin):
                     continue
+                elif bin.endswith('.gz'):
+                    if tarfile.is_tarfile(bin):
+                        logging.warning('Skipping file {} as tar archives are not supported'.format(bin))
+                    else:
+                        #remove the .x.gz extension to have uniform labelling
+                        if len(bin.split('.')) > 2:
+                            pre_gz_prefix = '.{}'.format(bin.split('.')[-2])
+                        else:
+                            pre_gz_prefix = ''
+                        basename = os.path.splitext(os.path.basename(bin))[0]
+                        basename = basename.split(pre_gz_prefix)[0]
+                        with gzip.open(bin, 'rb') as f_in:
+                            with open(os.path.join(bin_temporary_dir.name, '{}.{}'.format(basename, bin_extension)), 'wb') as f_out:
+                                shutil.copyfileobj(f_in, f_out)
                 else:
-                    copyfile(bin, os.path.join(bin_temporary_dir.name, '{}.{}'.format(os.path.splitext(os.path.basename(bin))[0], bin_extension)))
+                    shutil.copyfile(bin, os.path.join(bin_temporary_dir.name, '{}.{}'.format(os.path.splitext(os.path.basename(bin))[0], bin_extension)))
             predictor = predictQuality.Predictor(bin_temporary_dir.name, args.output_directory, bin_extension, args.threads,
                                                  args.force, args.lowmem)
             predictor.prediction_wf(args.genes, mode, args.dbg_cos, args.dbg_vectors, args.stdout)
