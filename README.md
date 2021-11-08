@@ -17,13 +17,14 @@ You can give it a folder with fasta files using `--input` and direct its output 
 checkm2 predict --input <folder_with_bins> --threads 30 --output-directory <output_folder> 
 ```
 
-CheckM2 can also take a list of files in its `--input` parameter. It will work out automatically if it was given a folder or a list of files and process accordingly, taking care of any file extensions in the process:
+CheckM2 can also take a list of files in its `--input` parameter. It will work out automatically if it was given a folder or a list of files and process accordingly. If given a list, specifying an extension is **unnecesary**. 
 ```
 checkm2 predict --input ../bin1.fa ../../bin2.fna /some/other/directory/bin3.fasta --threads 30 --output-directory <output_folder> 
 ```
+Checkm2 can also handle gzipped files. If passing a folder with gzip files, specify a *gz* --extension. If given a list of files, CheckM2 will work out automatically what to do and specifying an extension is **unnecesary**. It can also handle mixed lists of gzipped and non-gzipped files given to the --input command.   
 
 
-If you already have predicted protein files (ideally using prodigal), you can pass the folder checkm2 with an additional `--genes` option and set the file extension using `--extension`.
+If you already have predicted protein files (ideally using prodigal), you can pass the files to checkm2 with an additional `--genes` option to let it know to expect protein files.  
 
 By default, the output folder will have a tab-delimited file `quality_report.tsv` containing the completeness and contamination information for each bin. You can also print the results to stdout by passing the `--stdout` option to `checkm predict`.
 
