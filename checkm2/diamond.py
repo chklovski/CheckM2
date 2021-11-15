@@ -109,25 +109,21 @@ class DiamondRunner():
 
     def run(self, protein_files):
 
-        if len(protein_files) < self.chunksize:
+        if len(protein_files) <= self.chunksize:
             protein_chunks = self.__concatenate_proteins(protein_files)
+            diamond_out = os.path.join(self.diamond_out, "DIAMOND_RESULTS.tsv")
+            self.__call_diamond(protein_chunks, diamond_out)
+                        
         else:
             #break file list into chunks of size 'chunksize'
             chunk_list = [protein_files[i:i + self.chunksize] for i in range(0, len(protein_files), self.chunksize)]
-            protein_chunks = [self.__concatenate_proteins(chunk) for chunk in chunk_list]
+            
+            for number, chunk in enumerate(chunk_list):
+                diamond_out = os.path.join(self.diamond_out, "DIAMOND_RESULTS_{}.tsv".format(number))
+                self.__call_diamond(self.__concatenate_proteins(chunk), diamond_out)
 
         logging.info('Annotating input genomes with DIAMOND using {} threads'.format(self.threads))
-
-        #Check if we need to batch or not
-        if isinstance(protein_chunks, list):
-            for number, chunk in enumerate(protein_chunks):
-                diamond_out = os.path.join(self.diamond_out, "DIAMOND_RESULTS_{}.tsv".format(number))
-                self.__call_diamond(chunk, diamond_out)
-
-        else:
-            diamond_out = os.path.join(self.diamond_out, "DIAMOND_RESULTS.tsv")
-            self.__call_diamond(protein_chunks, diamond_out)
-
+        
         diamond_out_list = [x for x in os.listdir(self.diamond_out) if x.startswith('DIAMOND_RESULTS')]
         if len(diamond_out_list) == 0:
             logging.error("Error: DIAMOND failed to generate output.")
@@ -194,22 +190,3 @@ class DiamondRunner():
 
         diamond_complete_results = pd.concat([KO_genes, KO_pathways, KO_modules, KO_categories], axis=1)
         return diamond_complete_results, len(defaultKOs.keys())
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
