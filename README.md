@@ -1,30 +1,27 @@
 # CheckM2
-Rapid assessment of genome bins quality using machine learning. 
+Rapid assessment of genome bin quality using machine learning. 
 
-Unlike CheckM1, CheckM2 has universally trained machine learning models it applies regardless of taxonomic lineage to predict completeness/contamination of genomic bins. This allows it to incorporate many lineages in its training set that have few - or even just one - high-quality genomic representatives, by putting it in the context of all other organisms in the training set. As a result of the machine learning framework, CheckM2 is also highly accurate on organisms with reduced genomes or unusual biology, such as the Nanoarchaeota or Patescibacteria. 
+Unlike CheckM1, CheckM2 has universally trained machine learning models it applies regardless of taxonomic lineage to predict the completeness and contamination of genomic bins. This allows it to incorporate many lineages in its training set that have few - or even just one - high-quality genomic representatives, by putting it in the context of all other organisms in the training set. As a result of this machine learning framework, CheckM2 is also highly accurate on organisms with reduced genomes or unusual biology, such as the Nanoarchaeota or Patescibacteria. 
 
-CheckM2 uses two distinct machine learning models to predict genome completeness. The 'general' gradient boost model is able to generalize well and is intended to be used on novel organisms/those not represented in RefSeq (roughly - better when at the level of novel Order, Class or Phylum). The 'specific' neural network model is much more accurate when predicting completeness of organisms closer related to the reference training set (roughly - better when at the level of novel Species, Genus or Family). There is only one contamination model (based on gradient boost) which is applied regardless of taxonomic novelty and works well across all cases. 
-
-CheckM2 uses a cosine similarity calculation to automatically determine the appropriate model for each input genome, but you can also force the use of a particular completeness model, or get the prediction outputs for both. 
+CheckM2 uses two distinct machine learning models to predict genome completeness. The 'general' gradient boost model is able to generalize well and is intended to be used on  organisms not well represented in GenBank or RefSeq (roughly, when an organism is novel at the level of order, class or phylum). The 'specific' neural network model is more accurate when predicting completeness of organisms more closely related to the reference training set (roughly, when an organism belongs to a known species, genus or family). CheckM2 uses a cosine similarity calculation to automatically determine the appropriate completeness model for each input genome, but you can also force the use of a particular completeness model, or get the prediction outputs for both. There is only one contamination model (based on gradient boost) which is applied regardless of taxonomic novelty and works well across all cases. 
 
 # Usage
 
 #### Bin quality prediction
-The main use of CheckM2 is likely going to be the prediction of the completeness and contamination of genomic bins. 
+The main use of CheckM2 is to prediction the completeness and contamination of metagenome-assembled genomes (MAGs) and single-amplified genomes (SAGs), although it can also be applied to isolate genomes. 
 
-You can give it a folder with fasta files using `--input` and direct its output with `--output-directory`:
+You can give it a folder with FASTA files using `--input` and direct its output with `--output-directory`:
 ```
-checkm2 predict --input <folder_with_bins> --threads 30 --output-directory <output_folder> 
+checkm2 predict --threads 30 --input <folder_with_bins> --output-directory <output_folder> 
 ```
 
-CheckM2 can also take a list of files in its `--input` parameter. It will work out automatically if it was given a folder or a list of files and process accordingly. If given a list, specifying an extension is **unnecesary**. 
+CheckM2 can also take a list of files in its `--input` parameter. It will work out automatically if it was given a folder or a list of files and process accordingly:
 ```
-checkm2 predict --input ../bin1.fa ../../bin2.fna /some/other/directory/bin3.fasta --threads 30 --output-directory <output_folder> 
+checkm2 predict --threads 30 --input ../bin1.fa ../../bin2.fna /some/other/directory/bin3.fasta --output-directory <output_folder> 
 ```
 Checkm2 can also handle gzipped files. If passing a folder with gzip files, specify a *gz* --extension. If given a list of files, CheckM2 will work out automatically what to do and specifying an extension is **unnecesary**. It can also handle mixed lists of gzipped and non-gzipped files given to the --input command.   
 
-
-If you already have predicted protein files (ideally using prodigal), you can pass the files to checkm2 with an additional `--genes` option to let it know to expect protein files.  
+If you already have predicted protein files (ideally using Prodigal), you can pass the files to Checkm2 with an additional `--genes` option to let it know to expect protein files.  
 
 By default, the output folder will have a tab-delimited file `quality_report.tsv` containing the completeness and contamination information for each bin. You can also print the results to stdout by passing the `--stdout` option to `checkm predict`.
 
@@ -40,7 +37,7 @@ Retrieve the files:
 git clone --recursive https://github.com/chklovski/checkm2.git && cd checkm2
 ```
 
-Create an appropriate conda environment with prerequisites using the `checkm2.yml` file:
+Create an appropriate Conda environment with prerequisites using the `checkm2.yml` file:
 ```
 conda env create -n checkm2 -f checkm2.yml
 conda activate checkm2
@@ -53,15 +50,15 @@ bin/checkm2 -h
 
 # Installation
 
-The easiest way to install is using conda. In the future. 
+The easiest way to install is using Conda. In the future. 
 
-Alternatively, retrieve the github files: 
+Alternatively, retrieve the Github files: 
 
 ```
 git clone --recursive https://github.com/chklovski/checkm2.git && cd checkm2
 ```
 
-Then create a conda environment using the `checkm2.yml` file:
+Then create a Conda environment using the `checkm2.yml` file:
 ```
 conda env create -n checkm2 -f checkm2.yml
 conda activate checkm2
@@ -72,7 +69,7 @@ Finally, install CheckM2:
 python setup.py install
 ```
 
-Installation is then complete. To run checkm2, then you can
+Installation is then complete. To run Checkm2, then you can
 ```
 conda activate checkm2
 checkm2 -h
