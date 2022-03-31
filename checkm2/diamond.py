@@ -109,6 +109,9 @@ class DiamondRunner():
 
     def run(self, protein_files):
 
+        
+        logging.info('Annotating input genomes with DIAMOND using {} threads'.format(self.threads))
+        
         if len(protein_files) <= self.chunksize:
             protein_chunks = self.__concatenate_proteins(protein_files)
             diamond_out = os.path.join(self.diamond_out, "DIAMOND_RESULTS.tsv")
@@ -122,7 +125,6 @@ class DiamondRunner():
                 diamond_out = os.path.join(self.diamond_out, "DIAMOND_RESULTS_{}.tsv".format(number))
                 self.__call_diamond(self.__concatenate_proteins(chunk), diamond_out)
 
-        logging.info('Annotating input genomes with DIAMOND using {} threads'.format(self.threads))
         
         diamond_out_list = [x for x in os.listdir(self.diamond_out) if x.startswith('DIAMOND_RESULTS')]
         if len(diamond_out_list) == 0:
