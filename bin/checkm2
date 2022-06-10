@@ -159,7 +159,7 @@ if __name__ == '__main__':
                 bin_extension = 'fna'
             # make folder to copy disparate bins into, then point to it as input folder
             # make them all one extension to make life easier
-            fileManager.make_sure_path_exists(os.path.join(args.output_directory, 'input_bins'))
+            # fileManager.make_sure_path_exists(os.path.join(args.output_directory, 'input_bins'))
             bin_temporary_dir = tempfile.TemporaryDirectory()
             for bin in args.input:
                 if os.stat(bin).st_size == 0:
