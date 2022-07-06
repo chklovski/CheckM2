@@ -122,7 +122,7 @@ class Predictor():
         logging.info('Predicting completeness and contamination using general model.')
         general_results_comp, general_results_cont = modelProc.run_prediction_general(vector_array)
 
-        logging.info('Predicting completeness and contamination using specific model.')
+        logging.info('Predicting completeness using specific model.')
         specific_model_vector_len = (ko_list_length + len(
             metadata_order)) - 1  # -1 = without name TODO a bit ugly - maybe just calculate length on setup somewhere
 
