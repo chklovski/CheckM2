@@ -23,7 +23,6 @@ class modelProcessor:
 
         self.threads = threads
         self.reduced_cutoff = DefaultValues.AA_RATIO_COMPLETENESS_CUTOFF
-        self.cosine_table = pd.read_pickle(DefaultValues.COSINE_TABLE_LOCATION)
 
         # Returns cosine similarity matrix
 
@@ -43,7 +42,7 @@ class modelProcessor:
     def __calculate_cosine_similarity(self, feature_vector):
         # Todo - if input is big, we might need to chunk it so as not to overload RAM (depends on ref data size). 
 
-        csm = self.__calculate_sparse_CSM(self.ref_data, csr_matrix(feature_vector))
+        csm = self.__calculate_sparse_CSM(self.ref_data[:, :20021], csr_matrix(feature_vector[:, :20021]))
         # return array of closest matches in ref database
 
         return np.amax(csm, axis=0)
@@ -54,33 +53,51 @@ class modelProcessor:
         specific = row['Specific']
         cosine = row['Cosine_Similarity']
         AA_ratio = row['AA_Ratio']
+        novelty_ratio = general / (cosine ** 2)
 
         meancomp = (general + specific) / 2
 
-        range_chosen = round(meancomp, -1)
-        if range_chosen == 100:
-            range_chosen = 90
-
-        cosindex = self.closest(self.cosine_table[self.cosine_table['RANGE'] == range_chosen].values.flatten(), cosine)
-        #predicted taxonomic novelty based on cosine similarity
-        taxa = self.cosine_table.columns[cosindex]
 
         if (meancomp < 55) and (AA_ratio < self.reduced_cutoff):
             #unfamiliar highly reduced genome - therefore needs to use general model
             return general, 'Gradient Boost (General Model)'
-        
-        #for highly incomplete genomes, only the most unfamiliar are more accurate under the general model
-        elif (meancomp < 55 and taxa != 'Phylum') or (meancomp < 55 and taxa != 'Class'):
-            return specific, 'Neural Network (Specific Model)'
-        elif (meancomp < 55 and taxa == 'Phylum') or (meancomp < 55 and taxa == 'Class'):
-            return general, 'Gradient Boost (General Model)'
-
-        # for highly complete genomes, only the most familiar are more accurate under the specific model
-        elif taxa == 'Species' or taxa == 'Genus':  
-            return specific, 'Neural Network (Specific Model)'
+            
         else:
-            return general, 'Gradient Boost (General Model)'
-    
+          if meancomp > 90:
+            if novelty_ratio < 160:
+                return specific, 'Neural Network (Specific Model)'
+            else:
+                return general, 'Gradient Boost (General Model)'
+           
+          if meancomp > 80:
+              if novelty_ratio < 165:
+                  return specific, 'Neural Network (Specific Model)'
+              else:
+                  return general, 'Gradient Boost (General Model)'
+          if meancomp > 70:
+              if novelty_ratio < 165:
+                  return specific, 'Neural Network (Specific Model)'
+              else:
+                  return general, 'Gradient Boost (General Model)'
+          if meancomp > 60:
+              if novelty_ratio < 170:
+                  return specific, 'Neural Network (Specific Model)'
+              else:
+                  return general, 'Gradient Boost (General Model)'
+          if meancomp > 50:
+              if novelty_ratio < 175:
+                  return specific, 'Neural Network (Specific Model)'
+              else:
+                  return general, 'Gradient Boost (General Model)'
+          if meancomp > 40:
+              if novelty_ratio < 175:
+                  return specific, 'Neural Network (Specific Model)'
+              else:
+                  return general, 'Gradient Boost (General Model)'
+          else:
+              return specific, 'Neural Network (Specific Model)'
+        
+
     def calculate_general_specific_ratio(self, AA_counts, feature_vector, general_comp, contamination, specific_comp):
 
 
@@ -108,9 +125,4 @@ class modelProcessor:
         # models_chosen = ['Specific (NeuralNetwork)' if specific else 'General (GradientBoost)' for specific in specific_bool_mask]
     
         #return final_completeness, final_contamination, models_chosen, csm_array
-
-
-    def closest(self, lst, K):
-        idx = (np.abs(lst - K)).argmin()
-        return idx
 
