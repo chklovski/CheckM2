@@ -17,8 +17,8 @@ class modelProcessor:
 
         try:
             self.ref_data = scipy.sparse.load_npz(DefaultValues.REF_DATA_LOCATION)
-        except:
-            logging.error("Error: Reference data could not be loaded.")
+        except Exception as e:
+            logging.error("Error: Reference data could not be loaded: {}".format(e))
             sys.exit(1)
 
         self.threads = threads

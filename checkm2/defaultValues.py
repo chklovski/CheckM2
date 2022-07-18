@@ -24,6 +24,7 @@ class DefaultValues():
     
     AA_RATIO_COMPLETENESS_CUTOFF = 1500
 
+    MODEL_DIVERGENCE_WARNING_THRESHOLD = 25
 
     DB_LOCATION_DEFINITION = os.path.join(VERSION_PATH, 'diamond_path.json')
     DB_VAR = "CHECKM2DB"

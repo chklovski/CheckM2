@@ -37,8 +37,8 @@ class modelProcessor:
             else:
                 self.verbosity = 0
 
-        except:
-            logging.error("Saved models could not be loaded.")
+        except Exception as e:
+            logging.error("Saved models could not be loaded: {}".format(e))
             sys.exit(1)
 
     def run_prediction_general(self, vector_array):

@@ -61,8 +61,8 @@ class VersionControl():
         version_hashes = os.path.join(DefaultValues.VERSION_PATH, 'version_hashes_{}.json'.format(version.__version__))
         try:
             version_hashes = pd.read_json(version_hashes)
-        except:
-            logging.error('Could not open correct hash version file. Exiting.')
+        except Exception as e:
+            logging.error('Could not open correct hash version file: {}'.format(e))
             sys.exit(1)
         DB_version = version_hashes[version_hashes['type'] == 'DIAMONDDB'].sort_values(by='version', ascending=False)
         DB_version['Valid'] = DB_version.apply(
@@ -77,8 +77,8 @@ class VersionControl():
         version_hashes = os.path.join(DefaultValues.VERSION_PATH, 'version_hashes_{}.json'.format(version.__version__))
         try:
             version_hashes = pd.read_json(version_hashes)
-        except:
-            logging.error('Could not open correct hash version file. Exiting.')
+        except Exception as e:
+            logging.error('Could not open correct hash version file: {}'.format(e))
             sys.exit(1)
 
 
@@ -103,8 +103,8 @@ class VersionControl():
                                       'version_hashes_{}.json'.format(version.__version__))
         try:
             version_hashes = pd.read_json(version_hashes)
-        except:
-            logging.error('Could not open hash version file. Exiting.')
+        except Exception as e:
+            logging.error('Could not open correct hash version file: {}'.format(e))
             sys.exit(1)
 
         if not location:

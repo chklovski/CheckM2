@@ -169,7 +169,7 @@ class Predictor():
             sys.exit(1)
 
         if not genes_supplied:
-            final_results['Translation_Table Used'] = final_results['Name'].apply(lambda x: used_ttables[x])
+            final_results['Translation_Table_Used'] = final_results['Name'].apply(lambda x: used_ttables[x])
 
         if debug_cos is True:
             final_results['Cosine_Similarity'] = np.round(csm_array, 2)
@@ -177,6 +177,11 @@ class Predictor():
         if dumpvectors:
             dumpfile = os.path.join(self.output_folder, 'feature_vectors.pkl')
             feature_vectors.to_pickle(dumpfile, protocol=4)
+            
+        #Flag any substantial divergences in completeness predictions
+        additional_notes = self.__flag_divergent_predictions(general=general_results_comp, specific=specific_results_comp)
+        
+        final_results['Additional_Notes'] = additional_notes
 
         logging.info('CheckM2 finished successfully.')
         final_file = os.path.join(self.output_folder, 'quality_report.tsv')
@@ -184,6 +189,15 @@ class Predictor():
         
         if stdout:
             print(final_results.to_string(index=False, float_format=lambda x: '%.2f' % x))
+            
+    def __flag_divergent_predictions(self, general, specific, threshold=DefaultValues.MODEL_DIVERGENCE_WARNING_THRESHOLD):
+    
+        compare = pd.DataFrame({'General':general, 'Specific':specific})
+        compare['Difference'] = compare.apply(lambda row: abs(row['General'] - row['Specific']), axis=1)
+        compare['Additional_Notes'] = compare.apply(lambda row: 'None' if row['Specific'] < 50 or row['Difference'] < threshold else \
+        'Low confidence prediction - substantial ({}%) disagreement between completeness prediction models'.format(int(row['Difference'])), axis=1)
+        
+        return compare['Additional_Notes'].values
 
     def __set_up_prodigal_thread(self, queue_in, queue_out, used_ttable):
 

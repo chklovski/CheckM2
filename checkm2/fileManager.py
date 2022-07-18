@@ -50,8 +50,8 @@ class DiamondDB:
                 with open(diamond_location) as f:
                     diamond_definition = json.load(f)
                     return diamond_definition
-            except:
-                logging.error('Could not create new file. Exiting.')
+            except Exception as e:
+                logging.error('Could not create new file: {}'.format(e))
                 sys.exit(1)
 
 
@@ -98,8 +98,8 @@ class DiamondDB:
             try:
                 with open(diamond_location) as f:
                     diamond_definition = json.load(f)
-            except:
-                logging.error('Could not create new file. Exiting.')
+            except Exception as e:
+                logging.error('Could not create new file: {}'.format(e))
                 sys.exit(1)
         if diamond_definition['DBPATH'] != 'Not Set':
             logging.warning('DIAMOND database found at {}. Overwriting previous database.'.format(diamond_definition['DBPATH']))
