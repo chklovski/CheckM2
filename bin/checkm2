@@ -200,7 +200,8 @@ if __name__ == '__main__':
 
             results = pd.read_csv(os.path.join(temp_out_dir, 'quality_report.tsv'), sep='\t')
             if len(results) > 1:
-                logging.info('Test run successful!')
+                logging.info('Test run successful! See README for details. Results:')
+                print(results.to_string(index=False, float_format=lambda x: '%.2f' % x))
             else:
                 logging.error("Couldn't verify test run results.")
 
