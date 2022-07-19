@@ -69,7 +69,7 @@ Finally, install CheckM2:
 python setup.py install
 ```
 
-Installation is then complete. To run Checkm2, then you can
+This should take no longer than 5-10 mins on an average computer. Installation is then complete. To run Checkm2, then you can
 ```
 conda activate checkm2
 checkm2 -h
@@ -81,4 +81,16 @@ You will also need to download and install the external DIAMOND database CheckM2
 Use `checkm2 database --download` to install it into your default /home/user/databases directory, 
 or provide a custom location using `checkm2 database --download --path /custom/path/`
 
-You can test that the CheckM2 installation was successfull using `checkm2 testrun`
+# Test run
+
+It is highly recommended to do a testrun with CheckM2 after installation and database download to ensure everything works successfully. 
+You can test that the CheckM2 installation was successful using `checkm2 testrun`. This command should complete in < 5 mins on an average desktop computer. 
+
+Testrun runs CheckM2's genome quality prediction models on three (complete, uncontaminated) test genomes from diverse lineages to ensure the process runs to completeness and the predictions within expected margins. These are: 
+
+
+|Genome | GTDB taxonomy | CheckM1 Completeness  | CheckM1 Contamination|
+|  :---:   |  :---:   |  :---:  |  :---:  |
+|TEST1 | d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae;g__Escherichia;s__Escherichia coli |99.97| 0.04|
+|TEST2 | d__Bacteria;p__Patescibacteria;c__Dojkabacteria;o__SC72;f__SC72;g__UBA5209;s__UBA5209 sp002840365 | 79.86 | 0.00|
+|TEST3 | d__Archaea;p__Nanohaloarchaeota;c__Nanosalinia;o__Nanosalinales;f__Nanosalinaceae;g__Nanohalobium;s__Nanohalobium sp001761425 | 87.77 |0.00| 
