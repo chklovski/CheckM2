@@ -24,12 +24,17 @@ logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
 
 class Predictor():
-    def __init__(self, bin_folder, outdir, bin_extension='.fna', threads=1, overwrite=False, lowmem=False):
+    def __init__(self, bin_folder, outdir, bin_extension='.fna', threads=1, overwrite=False, lowmem=False, resume=False):
 
         self.bin_folder = bin_folder
         self.bin_extension = bin_extension
         self.bin_files = self.__setup_bins()
-        fileManager.check_empty_dir(outdir, overwrite)
+
+        if not resume:
+            fileManager.check_empty_dir(outdir, overwrite)
+        else:
+            fileManager.check_if_dir_exists(outdir)
+
         self.output_folder = outdir
         self.prodigal_folder = os.path.join(self.output_folder, DefaultValues.PRODIGAL_FOLDER_NAME)
         fileManager.make_sure_path_exists(self.prodigal_folder)
@@ -71,11 +76,14 @@ class Predictor():
 
         return sorted(bin_files)
 
-    def prediction_wf(self, genes_supplied=False, model_chosen='auto', debug_cos=False, dumpvectors=False, stdout=False):
+    def prediction_wf(self, genes_supplied=False, model_chosen='auto', debug_cos=False, dumpvectors=False, stdout=False, resume=False):
 
         ''' 1: Call genes and automatically determine coding table'''
+        if resume:
+            logging.info('Re-using protein files from output directory: {}'.format(self.prodigal_folder,))
+            prodigal_files = [os.path.join(self.prodigal_folder, bin_file) for bin_file in os.listdir(self.prodigal_folder)]
 
-        if not genes_supplied:
+        elif not genes_supplied:
             used_ttables = self.__run_prodigal()
             prodigal_files, used_ttables = fileManager.verify_prodigal_output(self.prodigal_folder, used_ttables, self.bin_extension)
 
@@ -100,7 +108,15 @@ class Predictor():
         ''' 3: Determine all KEGG annotations of input genomes using DIAMOND blastp'''
 
         diamond_search = diamond.DiamondRunner(self.total_threads, self.output_folder, self.lowmem)
-        diamond_out = diamond_search.run(prodigal_files)
+        if resume:
+            logging.info("Reusing DIAMOND output from output directory: {}".format(diamond_search.diamond_out))
+                
+            diamond_out = [x for x in os.listdir(diamond_search.diamond_out) if x.startswith('DIAMOND_RESULTS')]
+            if len(diamond_out) == 0:
+                logging.error("No DIAMOND outputs have been found in {}. Resuming is not possible.".format(diamond_search.diamond_out))
+                exit(1)
+        else:
+            diamond_out = diamond_search.run(prodigal_files)
 
         parsed_diamond_results, ko_list_length = diamond_search.process_diamond_output(diamond_out, metadata_df['Name'].values)
 
@@ -168,7 +184,7 @@ class Predictor():
             logging.error('Programming error in model choice')
             sys.exit(1)
 
-        if not genes_supplied:
+        if not genes_supplied and not resume: 
             final_results['Translation_Table_Used'] = final_results['Name'].apply(lambda x: used_ttables[x])
 
         if debug_cos is True:
