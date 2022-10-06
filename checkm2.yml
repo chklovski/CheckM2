@@ -6,7 +6,7 @@ dependencies:
   - python>=3.6
   - scikit-learn=0.23.2
   - h5py=2.10.0
-  - numpy>=1.16.4
+  - numpy=1.19.2
   - diamond>=2.0.4
   - tensorflow >= 2.3.0
   - lightgbm >= 3.2.1
