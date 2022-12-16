@@ -135,39 +135,13 @@ class DiamondRunner():
 
 
 
-    def process_diamond_output(self, diamond_out_list, full_name_list):
+    def process_diamond_output(self, defaultKOs, annot_dict, chunk_name_list):
 
-
-        logging.info('Processing DIAMOND output')
-        #concatenate all results even if only one
-        results = pd.concat([pd.read_csv(os.path.join(self.diamond_out, entry), sep='\t', usecols=[0, 1], names=['header', 'annotation']) for entry in diamond_out_list])
-        
-        if len(results) < 1:
-          logging.error('No DIAMOND annotation was generated. Exiting')
-          sys.exit(1)
-
-        #Split columns into usable series
-        results[['GenomeName', 'ProteinID']] = results['header'].str.split(self.separator, 1, expand=True)
-        results[['Ref100_hit', 'Kegg_annotation']] = results['annotation'].str.split('~', 1, expand=True)
-
-
-        ''' Get a list of default KO id's from data
-            Available categories are the keys in DefaultValues.feature_ordering
-            Here, returns an ordered set of KEGG ID's and sets to 0 
-        '''
         KeggCalc = keggData.KeggCalculator()
-        defaultKOs = KeggCalc.return_default_values_from_category('KO_Genes')
 
-        #Remove from results any KOs we're not currently using
-        results = results[results['Kegg_annotation'].isin(defaultKOs.keys())]
-
-
-        #Update counts per genome
         kegg_genome_list = []
         
-        annot_dict = dict(zip(sorted(results['GenomeName'].unique()), [x for _, x in results.groupby(results['GenomeName'])]))
-        
-        for genome in full_name_list:
+        for genome in chunk_name_list:
             sub_dict = defaultKOs.copy()
             sub_dict['Name'] = genome
 
@@ -180,7 +154,7 @@ class DiamondRunner():
 
         KO_genes = pd.DataFrame(kegg_genome_list)
 
-        logging.info('Calculating completeness of pathways and modules.')
+        #logging.info('Calculating completeness of pathways and modules.')
         logging.debug('Calculating pathway completeness information')
         KO_pathways = KeggCalc.calculate_KO_group('KO_Pathways', KO_genes.copy())
 

@@ -32,8 +32,23 @@ class ProdigalRunner():
         self.ntGeneFile = os.path.join(out_dir,  "{}{}".format(self.file_basename, '.fna'))
         self.gffFile = os.path.join(out_dir,  "{}{}".format(self.file_basename, '.gff'))
 
-    def run(self, query, bNucORFs=True):
+    def __calculate_N50(self, list_of_lengths):
 
+        tmp = []
+        for tmp_number in set(list_of_lengths):
+            tmp += [tmp_number] * list_of_lengths.count(tmp_number) * tmp_number
+        tmp.sort()
+
+        if (len(tmp) % 2) == 0:
+            median = (tmp[int(len(tmp) / 2) - 1] + tmp[int(len(tmp) / 2)]) / 2
+        else:
+            median = tmp[int(len(tmp) / 2)]
+
+        return median
+
+
+    def run(self, query, supplied_coding_table=None):
+        bNucORFs = True
         prodigal_input = query
                   
         # decompress archive input files                
@@ -47,12 +62,28 @@ class ProdigalRunner():
         seqs = sequenceClasses.SeqReader().read_nucleotide_sequences(prodigal_input)
 
         totalBases = 0
+
+        contig_lengths = []
+        GC = 0
+        AT = 0
         for seqId, seq in seqs.items():
             totalBases += len(seq)
+            contig_lengths.append(len(seq))
+            GC = sum(seq.count(x) for x in ("G", "C"))
+            AT = sum(seq.count(x) for x in ("A", "T"))
+
+        GC = float(GC/(AT + GC))
 
         # call ORFs with different translation tables and select the one with the highest coding density
         tableCodingDensity = {}
-        for translationTable in [4, 11]:
+
+        if supplied_coding_table is None:
+            ttables_to_check = [4, 11]
+        else:
+            ttables_to_check = [supplied_coding_table]
+
+
+        for translationTable in ttables_to_check:
             aaGeneFile = self.aaGeneFile + '.' + str(translationTable)
             ntGeneFile = self.ntGeneFile + '.' + str(translationTable)
             gffFile = self.gffFile + '.' + str(translationTable)
@@ -82,12 +113,19 @@ class ProdigalRunner():
                 # prodigal will fail to learn a model if the input genome has a large number of N's
                 # so try gene prediction with 'meta'
                 cmd = cmd.replace('-p single', '-p meta')
-                os.system(cmd)
+                try:
+                    os.system(cmd)
+                except Exception as e:
+                    logging.error('An error occured while running prodigal: {}'.format(e))
+                    sys.exit(1)
 
             # determine coding density
             prodigalParser = ProdigalGeneFeatureParser(gffFile)
 
             codingBases = 0
+
+
+
             for seqId, seq in seqs.items():
                 codingBases += prodigalParser.codingBases(seqId)
 
@@ -98,9 +136,14 @@ class ProdigalRunner():
             tableCodingDensity[translationTable] = codingDensity
 
         # determine best translation table
-        bestTranslationTable = 11
-        if (tableCodingDensity[4] - tableCodingDensity[11] > 0.05) and tableCodingDensity[4] > 0.7:
-            bestTranslationTable = 4
+
+        if supplied_coding_table is not None:
+            bestTranslationTable = supplied_coding_table
+        else:
+            bestTranslationTable = 11
+            if (tableCodingDensity[4] - tableCodingDensity[11] > 0.05) and tableCodingDensity[4] > 0.7:
+                bestTranslationTable = 4
+
 
         shutil.copyfile(self.aaGeneFile + '.' + str(bestTranslationTable), self.aaGeneFile)
         shutil.copyfile(self.gffFile + '.' + str(bestTranslationTable), self.gffFile)
@@ -108,7 +151,7 @@ class ProdigalRunner():
             shutil.copyfile(self.ntGeneFile + '.' + str(bestTranslationTable), self.ntGeneFile)
 
         # clean up redundant prodigal results
-        for translationTable in [4, 11]:
+        for translationTable in ttables_to_check:
             os.remove(self.aaGeneFile + '.' + str(translationTable))
             os.remove(self.gffFile + '.' + str(translationTable))
             if bNucORFs:
@@ -117,10 +160,21 @@ class ProdigalRunner():
         os.remove(self.ntGeneFile)
         os.remove(self.gffFile)
 
+
+        gene_lengths = []
+        cds_count = 0
+        aa_seqs = sequenceClasses.SeqReader().read_nucleotide_sequences(self.aaGeneFile)
+        for seqId, seq in aa_seqs.items():
+            gene_lengths.append(len(seq))
+            cds_count += 1
+
+
 #        if prodigal_input.endswith('.gz'):
 #            shutil.rmtree(tmp_dir)
 
-        return self.file_basename, bestTranslationTable
+        return self.file_basename, bestTranslationTable, tableCodingDensity[bestTranslationTable], \
+               self.__calculate_N50(contig_lengths), np.array(gene_lengths).mean(), totalBases,\
+               cds_count, GC
 
     def __areORFsCalled(self, aaGeneFile):
         return os.path.exists(aaGeneFile) and os.stat(aaGeneFile)[stat.ST_SIZE] != 0

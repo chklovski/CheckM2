@@ -9,7 +9,13 @@ warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 from checkm2.defaultValues import DefaultValues
 # import xgboost as xgb
 import lightgbm as lgb
+import os
+
+#make sure we're only using CPUs as GPUs can throw weird errors and is not worth the minor speed advantage
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 from tensorflow import keras
+
 from sklearn.preprocessing import MinMaxScaler
 import pickle
 import logging
@@ -20,6 +26,8 @@ import os
 class modelProcessor:
 
     def __init__(self, threads):
+
+
 
         self.nthreads = threads
 
@@ -63,6 +71,7 @@ class modelProcessor:
         scaled_vector = scaled_vector.reshape(scaled_vector.shape[0], scaled_vector.shape[1], 1)
 
         # only using genes for specific predictions
+
         comp_predictions = self.specific_model_comp_nn.predict(scaled_vector[:, :specific_model_vector_len],
                                                                verbose=self.verbosity)
 

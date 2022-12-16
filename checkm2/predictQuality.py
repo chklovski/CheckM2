@@ -1,10 +1,10 @@
+from checkm2 import modelProcessing
 from checkm2 import metadata
 from checkm2 import prodigal
 from checkm2 import diamond
 from checkm2.defaultValues import DefaultValues
 from checkm2.versionControl import VersionControl
 from checkm2 import keggData
-from checkm2 import modelProcessing
 from checkm2 import modelPostprocessing
 from checkm2 import fileManager
 
@@ -24,16 +24,11 @@ logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
 
 class Predictor():
-    def __init__(self, bin_folder, outdir, bin_extension='.fna', threads=1, overwrite=False, lowmem=False, resume=False):
+    def __init__(self, bin_folder, outdir, bin_extension='.fna', threads=1, lowmem=False):
 
         self.bin_folder = bin_folder
         self.bin_extension = bin_extension
         self.bin_files = self.__setup_bins()
-
-        if not resume:
-            fileManager.check_empty_dir(outdir, overwrite)
-        else:
-            fileManager.check_if_dir_exists(outdir)
 
         self.output_folder = outdir
         self.prodigal_folder = os.path.join(self.output_folder, DefaultValues.PRODIGAL_FOLDER_NAME)
@@ -76,7 +71,16 @@ class Predictor():
 
         return sorted(bin_files)
 
-    def prediction_wf(self, genes_supplied=False, model_chosen='auto', debug_cos=False, dumpvectors=False, stdout=False, resume=False):
+    def prediction_wf(self, genes_supplied=False, mode='auto', debug_cos=False,
+                      dumpvectors=False, stdout=False, resume=False, remove_intermediates=False, ttable=None):
+
+        #make sure models can be loaded without problems
+        modelProc = modelProcessing.modelProcessor(self.total_threads)
+
+        #make sure diamond is set up and ready to go
+        diamond_search = diamond.DiamondRunner(self.total_threads, self.output_folder, self.lowmem)
+
+
 
         ''' 1: Call genes and automatically determine coding table'''
         if resume:
@@ -84,7 +88,11 @@ class Predictor():
             prodigal_files = [os.path.join(self.prodigal_folder, bin_file) for bin_file in os.listdir(self.prodigal_folder)]
 
         elif not genes_supplied:
-            used_ttables = self.__run_prodigal()
+            used_ttables, coding_density, \
+            N50, avg_gene_len, \
+            total_bases, cds_count, \
+            GC = self.__run_prodigal(ttable)
+
             prodigal_files, used_ttables = fileManager.verify_prodigal_output(self.prodigal_folder, used_ttables, self.bin_extension)
 
         else:
@@ -107,7 +115,6 @@ class Predictor():
 
         ''' 3: Determine all KEGG annotations of input genomes using DIAMOND blastp'''
 
-        diamond_search = diamond.DiamondRunner(self.total_threads, self.output_folder, self.lowmem)
         if resume:
             logging.info("Reusing DIAMOND output from output directory: {}".format(diamond_search.diamond_out))
                 
@@ -118,65 +125,142 @@ class Predictor():
         else:
             diamond_out = diamond_search.run(prodigal_files)
 
-        parsed_diamond_results, ko_list_length = diamond_search.process_diamond_output(diamond_out, metadata_df['Name'].values)
+        ### MOVED
 
-        parsed_diamond_results.sort_values(by='Name', inplace=True)
-        metadata_df.sort_values(by='Name', inplace=True)
-        parsed_diamond_results.reset_index(drop=True, inplace=True)
-        metadata_df.reset_index(drop=True, inplace=True)
+        logging.info('Processing DIAMOND output')
+        # concatenate all results even if only one
+        results = pd.concat([pd.read_csv(os.path.join(diamond_search.diamond_out, entry), sep='\t', usecols=[0, 1],
+                                         names=['header', 'annotation']) for entry in diamond_out])
 
-        # delete duplicate 'name' column and merge
-        del parsed_diamond_results['Name']
+        if len(results) < 1:
+            logging.error('No DIAMOND annotation was generated. Exiting')
+            sys.exit(1)
 
-        feature_vectors = pd.concat([metadata_df, parsed_diamond_results], axis=1)
+        # Split columns into usable series
+        results[['GenomeName', 'ProteinID']] = results['header'].str.split(diamond_search.separator, 1, expand=True)
+        results[['Ref100_hit', 'Kegg_annotation']] = results['annotation'].str.split('~', 1, expand=True)
 
-        ''' 4: Call general model & specific models and derive predictions'''
-        modelProc = modelProcessing.modelProcessor(self.total_threads)
+        ''' Get a list of default KO id's from data
+            Available categories are the keys in DefaultValues.feature_ordering
+            Here, returns an ordered set of KEGG ID's and sets to 0 
+        '''
+        KeggCalc = keggData.KeggCalculator()
+        defaultKOs = KeggCalc.return_default_values_from_category('KO_Genes')
 
-        vector_array = feature_vectors.iloc[:, 1:].values.astype(np.float)
+        # Remove from results any KOs we're not currently using
+        results = results[results['Kegg_annotation'].isin(defaultKOs.keys())]
 
-        logging.info('Predicting completeness and contamination using general model.')
-        general_results_comp, general_results_cont = modelProc.run_prediction_general(vector_array)
+        # Update counts per genome
 
-        logging.info('Predicting completeness using specific model.')
-        specific_model_vector_len = (ko_list_length + len(
-            metadata_order)) - 1  # -1 = without name TODO a bit ugly - maybe just calculate length on setup somewhere
+        full_name_list = metadata_df['Name'].values
+        #kegg_genome_list = []
 
-        # also retrieve scaled data for CSM calculations
-        specific_results_comp, scaled_features = modelProc.run_prediction_specific(vector_array, specific_model_vector_len)
+        annot_dict = dict(
+            zip(sorted(results['GenomeName'].unique()), [x for _, x in results.groupby(results['GenomeName'])]))
 
-        ''' 5: Determine any substantially complete genomes similar to reference genomes and fine-tune predictions'''
+        logging.info('Predicting completeness and contamination using ML models.')
 
-        if not model_chosen == 'specific' or not model_chosen == 'general':
-            logging.info('Using cosine simlarity to reference data to select appropriate predictor model.')
+        names, final_comps, final_conts, models_chosen, csm_arrays, \
+        general_results_comp, specific_results_comp = [], [], [], [], [], [], []
 
-            postProcessor = modelPostprocessing.modelProcessor(self.total_threads)
-            final_comp, final_cont, models_chosen, csm_array = postProcessor.calculate_general_specific_ratio(
-                vector_array[:, 20], 
-                scaled_features,
-                general_results_comp,
-                general_results_cont,
-                specific_results_comp)
+        chunk_counter = 0
+
+        for i in range(0, len(full_name_list), DefaultValues.KO_FEATURE_VECTOR_CHUNK):
+            sublist = full_name_list[i:i + DefaultValues.KO_FEATURE_VECTOR_CHUNK]
+            chunk_counter += 1
+
+
+            parsed_diamond_results, ko_list_length = diamond_search.process_diamond_output(defaultKOs, annot_dict, sublist)
+
+
+            parsed_diamond_results.sort_values(by='Name', inplace=True)
+
+            sub_metadata = metadata_df[metadata_df['Name'].isin(sublist)]
+
+            sub_metadata.sort_values(by='Name', inplace=True)
+            parsed_diamond_results.sort_values(by='Name', inplace=True)
+            parsed_diamond_results.reset_index(drop=True, inplace=True)
+            sub_metadata.reset_index(drop=True, inplace=True)
+
+            names.append(parsed_diamond_results['Name'].values)
+
+            # delete duplicate 'name' column and merge
+            del parsed_diamond_results['Name']
+
+            feature_vectors = pd.concat([sub_metadata[sub_metadata['Name'].isin(sublist)], parsed_diamond_results], axis=1)
+            #print(feature_vectors.shape)
+
+            ''' 4: Call general model & specific models and derive predictions'''
+
+            vector_array = feature_vectors.iloc[:, 1:].values.astype(np.float)
+
+
+            general_result_comp, general_result_cont = modelProc.run_prediction_general(vector_array)
+
+            specific_model_vector_len = (ko_list_length + len(
+                metadata_order)) - 1  # -1 = without name TODO a bit ugly - maybe just calculate length on setup somewhere
+
+
+            # also retrieve scaled data for CSM calculations
+            specific_result_comp, scaled_features = modelProc.run_prediction_specific(vector_array, specific_model_vector_len)
+
+            final_conts.append(general_result_cont)
+            general_results_comp.append(general_result_comp)
+            specific_results_comp.append(specific_result_comp)
+
+
+            ''' 5: Determine any substantially complete genomes similar to reference genomes and fine-tune predictions'''
+
+            if not mode == 'specific' or not mode == 'general':
+                #logging.info('Using cosine simlarity to reference data to select appropriate predictor model.')
+
+                postProcessor = modelPostprocessing.modelProcessor(self.total_threads)
+                final_comp, final_cont, model_chosen, csm_array = postProcessor.calculate_general_specific_ratio(
+                    vector_array[:, 20],
+                    scaled_features,
+                    general_result_comp,
+                    general_result_cont,
+                    specific_result_comp)
+
+                final_comps.append(final_comp)
+                models_chosen.append(model_chosen)
+                csm_arrays.append(csm_array)
+
+            if dumpvectors:
+                dumpfile = os.path.join(self.output_folder, f'feature_vectors_{chunk_counter}.pkl')
+                feature_vectors.to_pickle(dumpfile, protocol=4)
 
         logging.info('Parsing all results and constructing final output table.')
 
-        final_results = feature_vectors[['Name']].copy()
-        if model_chosen == 'both':
+
+        #flatten lists
+        names = [item for sublist in names for item in sublist]
+        final_comps = [item for sublist in final_comps for item in sublist]
+        final_conts = [item for sublist in final_conts for item in sublist]
+        models_chosen = [item for sublist in models_chosen for item in sublist]
+        csm_arrays = [item for sublist in csm_arrays for item in sublist]
+        general_results_comp = [item for sublist in general_results_comp for item in sublist]
+        specific_results_comp = [item for sublist in specific_results_comp for item in sublist]
+
+
+        final_results = pd.DataFrame({'Name':names})
+
+        if mode == 'both':
             final_results['Completeness_General'] = np.round(general_results_comp, 2)
             final_results['Contamination'] = np.round(general_results_cont, 2)
             final_results['Completeness_Specific'] = np.round(specific_results_comp, 2)
             final_results['Completeness_Model_Used'] = models_chosen
 
-        elif model_chosen == 'auto':
-            final_results['Completeness'] = np.round(final_comp, 2)
-            final_results['Contamination'] = np.round(final_cont, 2)
+        elif mode == 'auto':
+            final_results['Completeness'] = np.round(final_comps, 2)
+            final_results['Contamination'] = np.round(final_conts, 2)
             final_results['Completeness_Model_Used'] = models_chosen
 
-        elif model_chosen == 'general':
+        elif mode == 'general':
             final_results['Completeness_General'] = np.round(general_results_comp, 2)
             final_results['Contamination'] = np.round(general_results_cont, 2)
 
-        elif model_chosen == 'specific':
+        elif mode == 'specific':
             final_results['Completeness_Specific'] = np.round(specific_results_comp, 2)
             final_results['Contamination'] = np.round(general_results_cont, 2)
 
@@ -184,28 +268,38 @@ class Predictor():
             logging.error('Programming error in model choice')
             sys.exit(1)
 
-        if not genes_supplied and not resume: 
+        if not genes_supplied and not resume:
             final_results['Translation_Table_Used'] = final_results['Name'].apply(lambda x: used_ttables[x])
+            final_results['Coding_Density'] = final_results['Name'].apply(lambda x: np.round(coding_density[x], 3))
+            final_results['Contig_N50'] = final_results['Name'].apply(lambda x: int(N50[x]))
+            final_results['Average_Gene_Length'] = final_results['Name'].apply(lambda x: avg_gene_len[x])
+            final_results['Genome_Size'] = final_results['Name'].apply(lambda x: total_bases[x])
+            final_results['GC_Content'] = final_results['Name'].apply(lambda x: np.round(GC[x], 2))
+            final_results['Total_Coding_Sequences'] = final_results['Name'].apply(lambda x: cds_count[x])
+
 
         if debug_cos is True:
-            final_results['Cosine_Similarity'] = np.round(csm_array, 2)
+            final_results['Cosine_Similarity'] = np.round(csm_arrays, 2)
 
-        if dumpvectors:
-            dumpfile = os.path.join(self.output_folder, 'feature_vectors.pkl')
-            feature_vectors.to_pickle(dumpfile, protocol=4)
+
             
         #Flag any substantial divergences in completeness predictions
         additional_notes = self.__flag_divergent_predictions(general=general_results_comp, specific=specific_results_comp)
         
         final_results['Additional_Notes'] = additional_notes
 
-        logging.info('CheckM2 finished successfully.')
         final_file = os.path.join(self.output_folder, 'quality_report.tsv')
         final_results.to_csv(final_file, sep='\t', index=False)
         
         if stdout:
             print(final_results.to_string(index=False, float_format=lambda x: '%.2f' % x))
-            
+
+        if remove_intermediates:
+            shutil.rmtree(self.prodigal_folder)
+            shutil.rmtree(diamond_search.diamond_out)
+
+        logging.info('CheckM2 finished successfully.')
+
     def __flag_divergent_predictions(self, general, specific, threshold=DefaultValues.MODEL_DIVERGENCE_WARNING_THRESHOLD):
     
         compare = pd.DataFrame({'General':general, 'Specific':specific})
@@ -215,7 +309,8 @@ class Predictor():
         
         return compare['Additional_Notes'].values
 
-    def __set_up_prodigal_thread(self, queue_in, queue_out, used_ttable):
+    def __set_up_prodigal_thread(self, queue_in, queue_out, ttable, used_ttable, coding_density,
+                                 N50, avg_gene_len, total_bases, cds_count, GC):
 
         while True:
             bin = queue_in.get(block=True, timeout=None)
@@ -223,11 +318,18 @@ class Predictor():
                 break
 
             prodigal_thread = prodigal.ProdigalRunner(self.prodigal_folder, bin)
-            binname, selected_coding_table = prodigal_thread.run(bin)
+            binname, selected_coding_table, c_density, \
+            v_N50, v_avg_gene_len, v_total_bases, v_cds_count, v_GC = prodigal_thread.run(bin, ttable)
 
             used_ttable[binname] = selected_coding_table
+            coding_density[binname] = c_density
+            N50[binname] = v_N50
+            avg_gene_len[binname] = v_avg_gene_len
+            total_bases[binname] = v_total_bases
+            GC[binname] = v_GC
+            cds_count[binname] = v_cds_count
 
-            queue_out.put((bin, selected_coding_table))
+            queue_out.put((bin, selected_coding_table, coding_density, N50, avg_gene_len, total_bases, cds_count, GC))
 
     def __reportProgress(self, total_bins, queueIn):
         """Report number of processed bins."""
@@ -235,7 +337,8 @@ class Predictor():
         processed = 0
 
         while True:
-            bin, selected_coding_table = queueIn.get(block=True, timeout=None)
+            bin, selected_coding_table, coding_density, N50, \
+            avg_gene_len, total_bases, cds_count, GC = queueIn.get(block=True, timeout=None)
             if bin == None:
                 if logging.root.level == logging.INFO or logging.root.level == logging.DEBUG:
                     sys.stdout.write('\n')
@@ -250,7 +353,7 @@ class Predictor():
                 sys.stdout.write('\r{}'.format(statusStr))
                 sys.stdout.flush()
 
-    def __run_prodigal(self):
+    def __run_prodigal(self, ttable):
 
         self.threads_per_bin = max(1, int(self.total_threads / len(self.bin_files)))
         logging.info("Calling genes in {} bins with {} threads:".format(len(self.bin_files), self.total_threads))
@@ -266,12 +369,21 @@ class Predictor():
             workerQueue.put(None)
 
         used_ttables = mp.Manager().dict()
+        coding_density = mp.Manager().dict()
+        N50 = mp.Manager().dict()
+        avg_gene_len = mp.Manager().dict()
+        total_bases = mp.Manager().dict()
+        cds_count = mp.Manager().dict()
+        GC = mp.Manager().dict()
 
         try:
             calcProc = []
             for _ in range(self.total_threads):
                 calcProc.append(
-                    mp.Process(target=self.__set_up_prodigal_thread, args=(workerQueue, writerQueue, used_ttables)))
+                    mp.Process(target=self.__set_up_prodigal_thread, args=(workerQueue, writerQueue, ttable,
+                                                                           used_ttables, coding_density,
+                                                                           N50, avg_gene_len,
+                                                                           total_bases, cds_count, GC)))
             writeProc = mp.Process(target=self.__reportProgress, args=(len(self.bin_files), writerQueue))
 
             writeProc.start()
@@ -282,7 +394,7 @@ class Predictor():
             for p in calcProc:
                 p.join()
 
-            writerQueue.put((None, None))
+            writerQueue.put((None, None, None, None, None, None, None, None))
             writeProc.join()
         except:
             # make sure all processes are terminated
@@ -291,7 +403,7 @@ class Predictor():
 
             writeProc.terminate()
 
-        return used_ttables
+        return used_ttables, coding_density, N50, avg_gene_len, total_bases, cds_count, GC
 
     def __calculate_metadata(self, faa_files):
 
