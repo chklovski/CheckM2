@@ -8,7 +8,7 @@ CheckM2 uses two distinct machine learning models to predict genome completeness
 # Usage
 
 #### Bin quality prediction
-The main use of CheckM2 is to prediction the completeness and contamination of metagenome-assembled genomes (MAGs) and single-amplified genomes (SAGs), although it can also be applied to isolate genomes. 
+The main use of CheckM2 is to predict the completeness and contamination of metagenome-assembled genomes (MAGs) and single-amplified genomes (SAGs), although it can also be applied to isolate genomes. 
 
 You can give it a folder with FASTA files using `--input` and direct its output with `--output-directory`:
 ```
