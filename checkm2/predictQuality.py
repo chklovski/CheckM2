@@ -247,7 +247,7 @@ class Predictor():
 
         if mode == 'both':
             final_results['Completeness_General'] = np.round(general_results_comp, 2)
-            final_results['Contamination'] = np.round(general_results_cont, 2)
+            final_results['Contamination'] = np.round(final_conts, 2)
             final_results['Completeness_Specific'] = np.round(specific_results_comp, 2)
             final_results['Completeness_Model_Used'] = models_chosen
 
@@ -258,11 +258,11 @@ class Predictor():
 
         elif mode == 'general':
             final_results['Completeness_General'] = np.round(general_results_comp, 2)
-            final_results['Contamination'] = np.round(general_results_cont, 2)
+            final_results['Contamination'] = np.round(final_conts, 2)
 
         elif mode == 'specific':
             final_results['Completeness_Specific'] = np.round(specific_results_comp, 2)
-            final_results['Contamination'] = np.round(general_results_cont, 2)
+            final_results['Contamination'] = np.round(final_conts, 2)
 
         else:
             logging.error('Programming error in model choice')
