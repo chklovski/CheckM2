@@ -69,10 +69,10 @@ class ProdigalRunner():
         for seqId, seq in seqs.items():
             totalBases += len(seq)
             contig_lengths.append(len(seq))
-            GC = sum(seq.count(x) for x in ("G", "C"))
-            AT = sum(seq.count(x) for x in ("A", "T"))
+            GC += sum(seq.upper().count(x) for x in ("G", "C"))
+            AT += sum(seq.upper().count(x) for x in ("A", "T"))
 
-        GC = float(GC/(AT + GC))
+        GC = float(GC/(AT + GC + 1))
 
         # call ORFs with different translation tables and select the one with the highest coding density
         tableCodingDensity = {}
