@@ -33,11 +33,11 @@ jobs:
           environment-file: checkm2.yml
           activate-environment: checkm2
       - name: package install
-        working-directory: ${{runner.workspace}}/checkm2/
+        working-directory: ${{runner.workspace}}
         run: |
             python setup.py install
       - name: checkm2 CLI tests
-        working-directory: ${{runner.workspace}}/checkm2/tests
+        working-directory: ${{runner.workspace}}
         run: |
             checkm2 -h
             checkm2 predict -h
