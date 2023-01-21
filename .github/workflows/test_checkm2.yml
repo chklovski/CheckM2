@@ -6,6 +6,9 @@ jobs:
   build:
     name: build (${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     env:
       DATADIR: data
     strategy:
@@ -16,32 +19,26 @@ jobs:
         include:
           - compiler: g++-9
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - name: Checkout submodules
-      run: git submodule update --init --recursive
-    - uses: conda-incubator/setup-miniconda@v2
-      with:
-        miniconda-version: 'latest'
-        auto-update-conda: true
-        mamba-version: "*"
-        python-version: ${{ matrix.python-version }}
-        channels: conda-forge,bioconda
-        environment-file: checkm2.yml
-        activate-environment: checkm2
-    - name: package install
-      shell: bash
-      working-directory: ${{runner.workspace}}/checkm2/
-      run: |
-        python setup.py install
-    - name: checkm2 unit tests
-      shell: bash
-      working-directory: ${{runner.workspace}}/checkm2/tests
-      run: |
-        pytest [checkm unit tests]
-    - name: checkm2 CLI tests
-      shell: bash
-      working-directory: ${{runner.workspace}}/checkm2/tests
-      run: |
-        checkm2 -h
-        checkm2 predict -h
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniconda-version: 'latest'
+          auto-update-conda: true
+          mamba-version: "*"
+          python-version: ${{ matrix.python-version }}
+          channels: conda-forge,bioconda
+          environment-file: checkm2.yml
+          activate-environment: checkm2
+      - name: package install
+        working-directory: ${{runner.workspace}}/checkm2/
+        run: |
+            python setup.py install
+      - name: checkm2 CLI tests
+        working-directory: ${{runner.workspace}}/checkm2/tests
+        run: |
+            checkm2 -h
+            checkm2 predict -h
+
