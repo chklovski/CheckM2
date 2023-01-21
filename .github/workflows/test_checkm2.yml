@@ -6,6 +6,9 @@ jobs:
   build:
     name: build (${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     env:
       DATADIR: data
     strategy:
@@ -30,18 +33,16 @@ jobs:
         environment-file: checkm2.yml
         activate-environment: checkm2
     - name: package install
-      #shell: bash -l {0}
       working-directory: ${{runner.workspace}}/checkm2/
       run: |
           python setup.py install
     - name: checkm2 unit tests
-      #shell: bash -l {0}
       working-directory: ${{runner.workspace}}/checkm2/tests
       run: |
           pytest [checkm unit tests]
     - name: checkm2 CLI tests
-      #shell: bash -l {0}
       working-directory: ${{runner.workspace}}/checkm2/tests
       run: |
           checkm2 -h
           checkm2 predict -h
+
