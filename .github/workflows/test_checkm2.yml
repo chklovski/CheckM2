@@ -5,24 +5,22 @@ on: [push, pull_request]
 jobs:
   build:
     name: build (${{ matrix.python-version }}, ${{ matrix.os }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash -l {0}
     env:
       DATADIR: data
     strategy:
-      matrix:
-        python-version: [3.8]
-        build_type: [Release]
-        compiler: [g++-9]
-        include:
-          - compiler: g++-9
+        matrix:
+            os: ["ubuntu-latest"]
+            python-version: [3.8]
+            build_type: [Release]
+            compiler: [g++-9]
+            include:
+              - compiler: g++-9
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
+      - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: 'latest'
@@ -32,13 +30,12 @@ jobs:
           channels: conda-forge,bioconda
           environment-file: checkm2.yml
           activate-environment: checkm2
+      - run: |
+          conda info
+          conda list
       - name: package install
-        working-directory: ${{runner.workspace}}
-        run: |
-            python setup.py install
+        run: python setup.py install
       - name: checkm2 CLI tests
-        working-directory: ${{runner.workspace}}
         run: |
             checkm2 -h
             checkm2 predict -h
-
