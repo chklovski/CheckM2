@@ -10,7 +10,7 @@ jobs:
       DATADIR: data
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: [3.8]
         build_type: [Release]
         compiler: [g++-9]
         include:
