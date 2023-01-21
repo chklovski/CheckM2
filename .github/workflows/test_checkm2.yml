@@ -39,3 +39,6 @@ jobs:
         run: |
             checkm2 -h
             checkm2 predict -h
+      - name: checkm2 testrun
+        run: |
+            checkm2 testrun -t 10
