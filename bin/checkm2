@@ -109,11 +109,15 @@ if __name__ == '__main__':
     predict_arguments.add_argument('--stdout', action='store_true', help='Print results to stdout [default: write to file]', default=False)
     predict_arguments.add_argument('--remove_intermediates', action='store_true', help="Remove all intermediate files (protein files, diamond output) [default: don't]", default=False)
     predict_arguments.add_argument('--ttable', type=int, metavar='ttable', help="Provide a specific progidal translation table for bins [default: automatically determine either 11 or 4]", default=None)
+    predict_arguments.add_argument('--database_path', help="Provide a location for the CheckM2 database for a given predict run [default: use either internal path set via <checkm2 database> or CHECKM2DB environmental variable]", default=None)
+
     predict_arguments.add_argument('--dbg_cos', action='store_true', help="DEBUG: write cosing similarity values to file [default: don't]", default=False)
     predict_arguments.add_argument('--dbg_vectors', action='store_true', help="DEBUG: dump pickled feature vectors to file [default: don't]", default=False)
 
+
     test_parser = new_subparser(subparsers, 'testrun', testrun_description)
     test_parser.add_argument('--threads', '-t', type=int, metavar='num_threads', help='number of CPUS to use [default: %i]' % num_threads, default=num_threads)
+    test_parser.add_argument('--database_path', help="Provide a location for the CheckM2 database for a given predict run [default: use either internal path set via <checkm2 database> or CHECKM2DB environmental variable]", default=None)
 
     download_parser = new_subparser(subparsers, 'database', download_description)
     action  = download_parser.add_mutually_exclusive_group(required=True)
@@ -179,6 +183,7 @@ if __name__ == '__main__':
                 logging.error('Translation table {} is not valid'.format(args.ttable))
                 sys.exit(1)
 
+
         logging.root.handlers = []
         logging.basicConfig(level=loglevel, format='[%(asctime)s] %(levelname)s: %(message)s',
                             datefmt='%m/%d/%Y %I:%M:%S %p',
@@ -186,10 +191,21 @@ if __name__ == '__main__':
                                       logging.StreamHandler()])
 
         mode = validate_args_model_choice(args)
+
+
+        logging.info('Running CheckM2 version {}'.format(__version__))
+
+        # check if db location was provided
+        tempDBpath = None
+        if args.database_path is not None:
+            logging.info(f'Custom database path provided for predict run. Checking database at {args.database_path}...')
+            if VersionControl().checksum_version_validate_DIAMOND(args.database_path):
+                tempDBpath = args.database_path
+
         logging.info("Running quality prediction workflow with {} threads.".format(args.threads))
         if len(args.input) == 1 and os.path.isdir(args.input[0]):
                 predictor = predictQuality.Predictor(args.input[0], args.output_directory, args.extension, args.threads,
-                                                     args.lowmem)
+                                                     args.lowmem, tempDBpath)
                 
                 predictor.prediction_wf(args.genes, mode, args.dbg_cos, args.dbg_vectors, args.stdout,
                                         args.resume, args.remove_intermediates, args.ttable)
@@ -222,7 +238,7 @@ if __name__ == '__main__':
                 else:
                     shutil.copyfile(bin, os.path.join(bin_temporary_dir.name, '{}.{}'.format(os.path.splitext(os.path.basename(bin))[0], bin_extension)))
             predictor = predictQuality.Predictor(bin_temporary_dir.name, args.output_directory, bin_extension, args.threads,
-                                                 args.lowmem)
+                                                 args.lowmem, tempDBpath)
             predictor.prediction_wf(args.genes, mode, args.dbg_cos, args.dbg_vectors,
                                     args.stdout, args.resume, args.remove_intermediates, args.ttable)
             bin_temporary_dir.cleanup()
@@ -236,8 +252,16 @@ if __name__ == '__main__':
             logging.error('Checksum unsuccessful. Please re-download test genomes or ensure CheckM2 version is correct.')
             sys.exit(1)
 
+        # check if db location was provided
+        tempDBpath = None
+        if args.database_path is not None:
+            logging.info(f'Custom database path provided for predict run. Checking database at {args.database_path}...')
+            if VersionControl().checksum_version_validate_DIAMOND(args.database_path):
+                tempDBpath = args.database_path
+
         with tempfile.TemporaryDirectory() as temp_out_dir:
-            predictor = predictQuality.Predictor(DefaultValues.TESTRUN_GENOMES, temp_out_dir, '.tst', args.threads, args.lowmem)
+            predictor = predictQuality.Predictor(DefaultValues.TESTRUN_GENOMES, temp_out_dir, '.tst', args.threads,
+                                                 args.lowmem, tempDBpath)
             predictor.prediction_wf(False, 'auto', False, False, False)
 
             results = pd.read_csv(os.path.join(temp_out_dir, 'quality_report.tsv'), sep='\t')
