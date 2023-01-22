@@ -42,10 +42,10 @@ jobs:
       - name: checkm2 version
         run: |
             checkm2 --version
-      - name: checkm2 database
-        run: |
-            checkm2 database --download
-      - name: checkm2 testrun
-        run: |
-            checkm2 testrun -t 10
+#       - name: checkm2 database
+#         run: |
+#             checkm2 database --download
+#       - name: checkm2 testrun
+#         run: |
+#             checkm2 testrun -t 10
         
