@@ -1,0 +1,51 @@
+name: CheckM2
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: build (${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -l {0}
+    env:
+      DATADIR: data
+    strategy:
+        matrix:
+            os: ["ubuntu-latest"]
+            python-version: [3.8]
+            build_type: [Release]
+            compiler: [g++-9]
+            include:
+              - compiler: g++-9
+    steps:
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniconda-version: 'latest'
+          auto-update-conda: true
+          mamba-version: "*"
+          python-version: ${{ matrix.python-version }}
+          channels: conda-forge,bioconda
+          environment-file: checkm2.yml
+          activate-environment: checkm2
+      - run: |
+          conda info
+          conda list
+      - name: package install
+        run: python setup.py install
+      - name: checkm2 CLI tests
+        run: |
+            checkm2 -h
+            checkm2 predict -h
+      - name: checkm2 version
+        run: |
+            checkm2 --version
+#       - name: checkm2 database
+#         run: |
+#             checkm2 database --download
+#       - name: checkm2 testrun
+#         run: |
+#             checkm2 testrun -t 10
+        

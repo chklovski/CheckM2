@@ -81,6 +81,9 @@ You will also need to download and install the external DIAMOND database CheckM2
 Use `checkm2 database --download` to install it into your default /home/user/databases directory, 
 or provide a custom location using `checkm2 database --download --path /custom/path/`
 
+The database path can also be set by setting the environmental variable CHECKM2DB using:
+`export CHECKM2DB="path/to/database"`
+
 # Test run
 
 It is highly recommended to do a testrun with CheckM2 after installation and database download to ensure everything works successfully. 

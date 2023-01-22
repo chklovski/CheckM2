@@ -16,7 +16,7 @@ import pandas as pd
 
 class DiamondRunner():
 
-    def __init__(self, threads, output_directory, lowmem):
+    def __init__(self, threads, output_directory, lowmem, diamond_location):
         self.threads = threads
 
         self.chunksize = DefaultValues.DIAMOND_DEFAULT_CHUNK_SIZE
@@ -33,6 +33,7 @@ class DiamondRunner():
         self.check_for_diamond()
         self.diamond_out = os.path.join(output_directory, "diamond_output")
         fileManager.make_sure_path_exists(self.diamond_out)
+        self.diamond_location = diamond_location
 
 
     def check_for_diamond(self):
@@ -48,11 +49,11 @@ class DiamondRunner():
             sys.exit(1)
 
         #next, confirm database is present
-        self.diamond_location = fileManager.DiamondDB().get_DB_location()
-        if self.diamond_location == None or self.diamond_location == '' or self.diamond_location == 'Not Set':
-            logging.error("Please download and install the CheckM2 database first (see 'checkm2 database -h')")
-            sys.exit(1)
-        fileManager.check_if_file_exists(self.diamond_location)
+        # self.diamond_location = fileManager.DiamondDB().get_DB_location()
+        # if self.diamond_location == None or self.diamond_location == '' or self.diamond_location == 'Not Set':
+        #     logging.error("Please download and install the CheckM2 database first (see 'checkm2 database -h')")
+        #     sys.exit(1)
+        # fileManager.check_if_file_exists(self.diamond_location)
 
 
     def __concatenate_proteins(self, file_list):

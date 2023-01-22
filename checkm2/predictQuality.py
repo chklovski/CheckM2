@@ -24,7 +24,7 @@ logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
 
 class Predictor():
-    def __init__(self, bin_folder, outdir, bin_extension='.fna', threads=1, lowmem=False):
+    def __init__(self, bin_folder, outdir, bin_extension='.fna', threads=1, lowmem=False, tempDBloc=None):
 
         self.bin_folder = bin_folder
         self.bin_extension = bin_extension
@@ -47,8 +47,17 @@ class Predictor():
         #    sys.exit(1)
 
         logging.debug('Verifying DIAMOND DB installation path.')
-        #currently unused
-        self.diamond_path = fileManager.DiamondDB().get_DB_location()
+
+        if tempDBloc is not None:
+            self.diamond_path = tempDBloc
+        else:
+            self.diamond_path = fileManager.DiamondDB().get_DB_location()
+
+        if self.diamond_path == None or self.diamond_path == '' or self.diamond_path == 'Not Set':
+            logging.error("Please download and install the CheckM2 database first (see 'checkm2 database -h')")
+            sys.exit(1)
+
+        fileManager.check_if_file_exists(self.diamond_path)
 
 
     def __setup_bins(self):
@@ -78,7 +87,7 @@ class Predictor():
         modelProc = modelProcessing.modelProcessor(self.total_threads)
 
         #make sure diamond is set up and ready to go
-        diamond_search = diamond.DiamondRunner(self.total_threads, self.output_folder, self.lowmem)
+        diamond_search = diamond.DiamondRunner(self.total_threads, self.output_folder, self.lowmem, self.diamond_path)
 
 
 
