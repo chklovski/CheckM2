@@ -52,6 +52,13 @@ bin/checkm2 -h
 
 The easiest way to install is using Conda. In the future. 
 
+CheckM2 is also available on Pypi. To install via pip, use the checkm2.yml file provided in the github to create a new conda environment:
+
+`conda env create -n checkm2 -f checkm2.yml` and 
+`conda activate checkm2`
+
+then simply `pip install CheckM2`
+
 Alternatively, retrieve the Github files: 
 
 ```
@@ -79,10 +86,12 @@ checkm2 -h
 
 You will also need to download and install the external DIAMOND database CheckM2 relies on for rapid annotation. 
 Use `checkm2 database --download` to install it into your default /home/user/databases directory, 
-or provide a custom location using `checkm2 database --download --path /custom/path/`
+or provide a custom location using `checkm2 database --download --path /custom/path/`. If centrally installed, ideally the administrator should carry out this step during the setup as users may not have permission to modify CheckM2 options. 
 
 The database path can also be set by setting the environmental variable CHECKM2DB using:
 `export CHECKM2DB="path/to/database"`
+
+Finally, the `--database_path` can be used with `checkm2 predict` to provide an already downloaded checkm2 database during a single predict run, e.g. `checkm2 predict -i ./folder_with_MAGs -o ./output_folder --database_path /path/to/database/CheckM2_database/uniref100.KO.1.dmnd`
 
 # Test run
 
