@@ -25,7 +25,7 @@ setup(
                       'requests',
                       'prodigal>=2.6.3',
                       'tqdm',
-                      'packaging'
+                      'packaging',
                       'requests',
                       'setuptools'
                       ),
