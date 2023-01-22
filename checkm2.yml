@@ -13,7 +13,7 @@ dependencies:
   - pandas <= 1.4.0
   - scipy
   - prodigal>=2.6.3
-  - setuptools < 66
+  - setuptools
   - requests
   - packaging
   - tqdm

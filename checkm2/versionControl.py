@@ -113,9 +113,10 @@ class VersionControl():
             database_dir = location
 
         dbhash = self.__calculate_checksum(database_dir, True)
+        
 
         if dbhash in version_hashes['sha256'].values:
-            cutoff_version = version_hashes[version_hashes["sha256"] == dbhash]['incompatible_below_checkm2ver']
+            cutoff_version = version_hashes[version_hashes["sha256"] == dbhash]['incompatible_below_checkm2ver'].values[-1]
             return self.__validateVersion(self.version, cutoff_version)
         else:
             logging.error('One of the files CheckM2 relies on has an incorrect checksum. Please re-download CheckM2.')
