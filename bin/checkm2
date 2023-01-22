@@ -41,6 +41,16 @@ if __name__ == '__main__':
 
     num_threads = 1
 
+
+    class ChangeTempAction(argparse.Action):
+        def __call__(self, parser, namespace, newtmpdir, option_string=None):
+            if os.path.isdir(newtmpdir):
+                tempfile.tempdir = newtmpdir
+            else:
+                raise argparse.ArgumentTypeError(
+                    'The value of %s must be a valid directory' % option_string)
+
+
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument('--debug', help='output debug information', action="store_true")
     parent_parser.add_argument('--version', help='output version information and quit',  action='version', version=__version__)
@@ -90,6 +100,8 @@ if __name__ == '__main__':
                                    help='Treat input files as protein files. [Default: False]', default=False)
     predict_arguments.add_argument('-x', '--extension',
                                    help='Extension of input files. [Default: .fna]', default='.fna')
+    predict_arguments.add_argument('--tmpdir', action=ChangeTempAction,
+                                   help="specify an alternative directory for temporary files")
 
     predict_arguments.add_argument('--force', action='store_true', help='overwrite output directory [default: not set]', default=False)
     predict_arguments.add_argument('--resume', action='store_true', help='Reuse Prodigal and DIAMOND results found in output directory [default: not set]', default=False)
