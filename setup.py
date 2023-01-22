@@ -23,7 +23,6 @@ setup(
                       'tensorflow>=2.1.0, <2.6.0',
                       'lightgbm==3.2.1',
                       'requests',
-                      'prodigal',
                       'tqdm',
                       'packaging',
                       'requests',
