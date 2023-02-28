@@ -50,7 +50,9 @@ bin/checkm2 -h
 
 # Installation
 
-The easiest way to install is using Conda. In the future. 
+The easiest way to install is using Conda in a new environment:
+
+`conda create -n checkm2 -c bioconda -c conda-forge checkm2`
 
 CheckM2 is also available on Pypi. To install via pip, use the checkm2.yml file provided in the github to create a new conda environment:
 
