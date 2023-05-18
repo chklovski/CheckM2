@@ -54,6 +54,10 @@ The easiest way to install is using Conda in a new environment:
 
 `conda create -n checkm2 -c bioconda -c conda-forge checkm2`
 
+However, conda can be very slow when processing requirements for the environment. A much faster and better way to install CheckM2 is to install using mamba and creating a new environment:
+
+`mamba create -n checkm2 -c bioconda -c conda-forge checkm2`
+
 CheckM2 is also available on Pypi. To install via pip, use the checkm2.yml file provided in the github to create a new conda environment:
 
 `conda env create -n checkm2 -f checkm2.yml` and 
