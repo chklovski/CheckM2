@@ -100,7 +100,7 @@ class Predictor():
             used_ttables, coding_density, \
             N50, avg_gene_len, \
             total_bases, cds_count, \
-            GC = self.__run_prodigal(ttable)
+            GC, totalContigs, maxContigLen = self.__run_prodigal(ttable)
 
             prodigal_files, used_ttables = fileManager.verify_prodigal_output(self.prodigal_folder, used_ttables, self.bin_extension)
 
@@ -285,6 +285,8 @@ class Predictor():
             final_results['Genome_Size'] = final_results['Name'].apply(lambda x: total_bases[x])
             final_results['GC_Content'] = final_results['Name'].apply(lambda x: np.round(GC[x], 2))
             final_results['Total_Coding_Sequences'] = final_results['Name'].apply(lambda x: cds_count[x])
+            final_results['Total_Contigs'] = final_results['Name'].apply(lambda x: totalContigs[x])
+            final_results['Max_Contig_Length'] = final_results['Name'].apply(lambda x: maxContigLen[x])
 
 
         if debug_cos is True:
@@ -319,7 +321,7 @@ class Predictor():
         return compare['Additional_Notes'].values
 
     def __set_up_prodigal_thread(self, queue_in, queue_out, ttable, used_ttable, coding_density,
-                                 N50, avg_gene_len, total_bases, cds_count, GC):
+                                 N50, avg_gene_len, total_bases, cds_count, GC, totalContigs, maxContigLen):
 
         while True:
             bin = queue_in.get(block=True, timeout=None)
@@ -328,7 +330,8 @@ class Predictor():
 
             prodigal_thread = prodigal.ProdigalRunner(self.prodigal_folder, bin)
             binname, selected_coding_table, c_density, \
-            v_N50, v_avg_gene_len, v_total_bases, v_cds_count, v_GC = prodigal_thread.run(bin, ttable)
+            v_N50, v_avg_gene_len, v_total_bases, v_cds_count, \
+            v_GC, v_totalContigs, v_maxContigLen = prodigal_thread.run(bin, ttable)
 
             used_ttable[binname] = selected_coding_table
             coding_density[binname] = c_density
@@ -337,8 +340,11 @@ class Predictor():
             total_bases[binname] = v_total_bases
             GC[binname] = v_GC
             cds_count[binname] = v_cds_count
+            totalContigs[binname] = v_totalContigs
+            maxContigLen[binname] = v_maxContigLen
 
-            queue_out.put((bin, selected_coding_table, coding_density, N50, avg_gene_len, total_bases, cds_count, GC))
+            queue_out.put((bin, selected_coding_table, coding_density, N50, avg_gene_len, total_bases, cds_count,
+                           GC, totalContigs, maxContigLen))
 
     def __reportProgress(self, total_bins, queueIn):
         """Report number of processed bins."""
@@ -347,7 +353,7 @@ class Predictor():
 
         while True:
             bin, selected_coding_table, coding_density, N50, \
-            avg_gene_len, total_bases, cds_count, GC = queueIn.get(block=True, timeout=None)
+            avg_gene_len, total_bases, cds_count, GC, totalContigs, maxContigLen = queueIn.get(block=True, timeout=None)
             if bin == None:
                 if logging.root.level == logging.INFO or logging.root.level == logging.DEBUG:
                     sys.stdout.write('\n')
@@ -384,6 +390,9 @@ class Predictor():
         total_bases = mp.Manager().dict()
         cds_count = mp.Manager().dict()
         GC = mp.Manager().dict()
+        totalContigs = mp.Manager().dict()
+        maxContigLen = mp.Manager().dict()
+
 
         try:
             calcProc = []
@@ -392,7 +401,7 @@ class Predictor():
                     mp.Process(target=self.__set_up_prodigal_thread, args=(workerQueue, writerQueue, ttable,
                                                                            used_ttables, coding_density,
                                                                            N50, avg_gene_len,
-                                                                           total_bases, cds_count, GC)))
+                                                                           total_bases, cds_count, GC, totalContigs, maxContigLen)))
             writeProc = mp.Process(target=self.__reportProgress, args=(len(self.bin_files), writerQueue))
 
             writeProc.start()
@@ -403,7 +412,7 @@ class Predictor():
             for p in calcProc:
                 p.join()
 
-            writerQueue.put((None, None, None, None, None, None, None, None))
+            writerQueue.put((None, None, None, None, None, None, None, None, None, None))
             writeProc.join()
         except:
             # make sure all processes are terminated
@@ -412,7 +421,7 @@ class Predictor():
 
             writeProc.terminate()
 
-        return used_ttables, coding_density, N50, avg_gene_len, total_bases, cds_count, GC
+        return used_ttables, coding_density, N50, avg_gene_len, total_bases, cds_count, GC, totalContigs, maxContigLen
 
     def __calculate_metadata(self, faa_files):
 

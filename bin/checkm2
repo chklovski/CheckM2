@@ -72,9 +72,9 @@ if __name__ == '__main__':
         return subpar
 
 
-    predict_description = 'Predict the completeness and contamination of genome bins in a folder. Example usage: \n\n' \ 
+    predict_description = 'Predict the completeness and contamination of genome bins in a folder. Example usage: \n\n' \
                            '\tcheckm2 predict --threads 30 --input <folder_with_bins> --output-directory <output_folder>'
-    testrun_description = 'Runs Checkm2 on internal test genomes to ensure it runs without errors. Example usage: \n\n' \ 
+    testrun_description = 'Runs Checkm2 on internal test genomes to ensure it runs without errors. Example usage: \n\n' \
                             '\t checkm2 testrun --threads 10'
     download_description = 'Download/set up required diamond database for CheckM2. Example usage: \n\n ' \
                            '\tcheckm2 database --download (downloads database into /home/user/databases)\n ' \
