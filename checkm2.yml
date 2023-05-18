@@ -3,16 +3,16 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - python>=3.6, <3.9
+  - python>=3.7, <3.9
   - scikit-learn=0.23.2
   - h5py=2.10.0
   - numpy=1.19.2
   - diamond=2.0.4
   - tensorflow >= 2.2.0, <2.6.0
-  - lightgbm = 3.2.1
-  - pandas <= 1.4.0
-  - scipy
-  - prodigal>=2.6.3
+  - lightgbm=3.2.1
+  - pandas=1.4.0
+  - scipy=1.8.0
+  - prodigal=2.6.3
   - setuptools
   - requests
   - packaging

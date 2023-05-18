@@ -34,6 +34,9 @@ class ProdigalRunner():
 
     def __calculate_N50(self, list_of_lengths):
 
+        if np.array(list_of_lengths).mean() == 0:
+            return 0
+
         tmp = []
         for tmp_number in set(list_of_lengths):
             tmp += [tmp_number] * list_of_lengths.count(tmp_number) * tmp_number
@@ -172,9 +175,12 @@ class ProdigalRunner():
 #        if prodigal_input.endswith('.gz'):
 #            shutil.rmtree(tmp_dir)
 
+        maxContigLen = np.array(contig_lengths).max()
+        totalContigs = len(contig_lengths)
+
         return self.file_basename, bestTranslationTable, tableCodingDensity[bestTranslationTable], \
                self.__calculate_N50(contig_lengths), np.array(gene_lengths).mean(), totalBases,\
-               cds_count, GC
+               cds_count, GC, totalContigs, maxContigLen
 
     def __areORFsCalled(self, aaGeneFile):
         return os.path.exists(aaGeneFile) and os.stat(aaGeneFile)[stat.ST_SIZE] != 0
