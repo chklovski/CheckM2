@@ -115,7 +115,7 @@ Testrun runs CheckM2's genome quality prediction models on three (complete, unco
 
 # Databases
 
-CheckM2 will automatically download and install the reference database. However, if for some reason you are unable to to do so through CheckM2 but still wish to run CheckM2, you can download it from zenodo from the URL below and use it with CheckM2 using the `--database_path /path/to/downloaded_db/uniref100.KO.1.dmnd` argument or export it to the CHECKM2DB environmental variable: 
+CheckM2 will download and install the reference database using the `checkm2 database --download <options>` command. However, if for some reason you are unable to to do so through CheckM2 but still wish to run CheckM2, you can download it from its Zenodo repository from the URL below and use it with CheckM2 using the `--database_path /path/to/downloaded_db/uniref100.KO.1.dmnd` argument or using the CHECKM2DB environmental variable. Please note that the the database will need to be compatible with the version of CheckM2 you are using. 
 
 Current reference database (v.1.0.2):
 https://zenodo.org/record/5571251/
