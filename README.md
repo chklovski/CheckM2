@@ -104,11 +104,11 @@ Finally, the `--database_path` can be used with `checkm2 predict` to provide an 
 It is highly recommended to do a testrun with CheckM2 after installation and database download to ensure everything works successfully. 
 You can test that the CheckM2 installation was successful using `checkm2 testrun`. This command should complete in < 5 mins on an average desktop computer. 
 
-Testrun runs CheckM2's genome quality prediction models on three (complete, uncontaminated) test genomes from diverse lineages to ensure the process runs to completeness and the predictions within expected margins. These are: 
+Testrun runs CheckM2's genome quality prediction models on three (complete, uncontaminated) test genomes from diverse lineages to ensure the process runs to completeness and the predictions within expected margins. These genomes are listed below, as well as completeness and contamination scores from CheckM2 and CheckM1 for comparison: 
 
 
-|Genome | GTDB taxonomy | CheckM1 Completeness  | CheckM1 Contamination|
-|  :---:   |  :---:   |  :---:  |  :---:  |
-|TEST1 | d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae;g__Escherichia;s__Escherichia coli |99.97| 0.04|
-|TEST2 | d__Bacteria;p__Patescibacteria;c__Dojkabacteria;o__SC72;f__SC72;g__UBA5209;s__UBA5209 sp002840365 | 79.86 | 0.00|
-|TEST3 | d__Archaea;p__Nanohaloarchaeota;c__Nanosalinia;o__Nanosalinales;f__Nanosalinaceae;g__Nanohalobium;s__Nanohalobium sp001761425 | 87.77 |0.00| 
+|Genome | CheckM2 Completeness  | CheckM2 Contamination | CheckM1 Contamination | CheckM1 Contamination | GTDB taxonomy |
+|  :---:   |  :---:   |  :---:  |  :---:  |  :---:  |  :---:  | 
+|TEST1 | 100.00 | 0.74 | 99.97 | 0.04 | d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae;g__Escherichia;s__Escherichia coli |
+|TEST2 | 98.54 | 0.21 | 99.97 | 0.04 | d__Bacteria;p__Patescibacteria;c__Dojkabacteria;o__SC72;f__SC72;g__UBA5209;s__UBA5209 sp002840365 |
+|TEST3 | 98.75 | 0.51 | 99.97 | 0.04 | d__Archaea;p__Nanohaloarchaeota;c__Nanosalinia;o__Nanosalinales;f__Nanosalinaceae;g__Nanohalobium;s__Nanohalobium sp001761425 |
