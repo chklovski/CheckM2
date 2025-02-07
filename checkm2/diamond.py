@@ -43,7 +43,7 @@ class DiamondRunner():
         # else returns something non-zero
 
         try:
-            subprocess.call(['diamond', 'help'], stdout=open(os.devnull, 'w'), stderr=subprocess.STDOUT)
+            subprocess.check_call(['diamond', 'help'], stdout=open(os.devnull, 'w'), stderr=subprocess.STDOUT)
         except:
             logging.error("Make sure diamond is on your system path.")
             sys.exit(1)
@@ -98,7 +98,7 @@ class DiamondRunner():
                             diamond_working_dir.name)
 
                 logging.debug(cmd)
-                subprocess.call(cmd, shell=True)
+                subprocess.check_call(cmd, shell=True)
                 logging.debug('Finished Running DIAMOND')
             except Exception as e:
                 logging.error('An error occured while running DIAMOND: {}'.format(e))
