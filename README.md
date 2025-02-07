@@ -107,8 +107,15 @@ You can test that the CheckM2 installation was successful using `checkm2 testrun
 Testrun runs CheckM2's genome quality prediction models on three (complete, uncontaminated) test genomes from diverse lineages to ensure the process runs to completeness and the predictions within expected margins. These are: 
 
 
-|Genome | GTDB taxonomy | CheckM1 Completeness  | CheckM1 Contamination|
-|  :---:   |  :---:   |  :---:  |  :---:  |
-|TEST1 | d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae;g__Escherichia;s__Escherichia coli |99.97| 0.04|
-|TEST2 | d__Bacteria;p__Patescibacteria;c__Dojkabacteria;o__SC72;f__SC72;g__UBA5209;s__UBA5209 sp002840365 | 79.86 | 0.00|
-|TEST3 | d__Archaea;p__Nanohaloarchaeota;c__Nanosalinia;o__Nanosalinales;f__Nanosalinaceae;g__Nanohalobium;s__Nanohalobium sp001761425 | 87.77 |0.00| 
+|Genome | GTDB taxonomy |  Expected CheckM2 Completeness (v.1.0.2)  | Expected CheckM2 Contamination (v.1.0.2)| CheckM1 Completeness  | CheckM1 Contamination|
+|  :---:   |  :---:   |  :---:  |  :---:  |:---:  |  :---:  |
+|TEST1 | d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae;g__Escherichia;s__Escherichia coli |100| 0.74| 99.97| 0.04|
+|TEST2 | d__Bacteria;p__Patescibacteria;c__Dojkabacteria;o__SC72;f__SC72;g__UBA5209;s__UBA5209 sp002840365 | 98.54 | 0.21|79.86| 0.00|
+|TEST3 | d__Archaea;p__Nanohaloarchaeota;c__Nanosalinia;o__Nanosalinales;f__Nanosalinaceae;g__Nanohalobium;s__Nanohalobium sp001761425 | 98.75 |0.51| 87.77 |0.00| 
+
+# Databases
+
+CheckM2 will download and install the reference database using the `checkm2 database --download <options>` command. However, if for some reason you are unable to to do so through CheckM2 but still wish to run CheckM2, you can download it from its Zenodo repository from the URL below and use it with CheckM2 using the `--database_path /path/to/downloaded_db/uniref100.KO.1.dmnd` argument or using the CHECKM2DB environmental variable. Please note that the the database will need to be compatible with the version of CheckM2 you are using. 
+
+Current reference database (v.1.0.2):
+https://zenodo.org/record/5571251/
