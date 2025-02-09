@@ -14,7 +14,10 @@ import os
 #make sure we're only using CPUs as GPUs can throw weird errors and is not worth the minor speed advantage
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-from tensorflow import keras
+#from tensorflow import keras
+import keras
+from keras.models import load_model
+os.environ["KERAS_BACKEND"] = "tensorflow"
 
 from sklearn.preprocessing import MinMaxScaler
 import pickle
@@ -35,7 +38,7 @@ class modelProcessor:
             self.general_model_comp = lgb.Booster(model_file=DefaultValues.GENERAL_MODEL_COMP_LOCATION)
             self.model_cont = lgb.Booster(model_file=DefaultValues.MODEL_CONT_LOCATION)
 
-            self.specific_model_comp_nn = keras.models.load_model(DefaultValues.SPECIFIC_MODEL_COMP_LOCATION)
+            self.specific_model_comp_nn = load_model(DefaultValues.SPECIFIC_MODEL_COMP_LOCATION)
 
             self.minmax_scaler = pickle.load(open(DefaultValues.SCALER_FILE_LOCATION, 'rb'))
             

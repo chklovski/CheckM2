@@ -146,8 +146,10 @@ class Predictor():
             sys.exit(1)
 
         # Split columns into usable series
-        results[['GenomeName', 'ProteinID']] = results['header'].str.split(diamond_search.separator, 1, expand=True)
-        results[['Ref100_hit', 'Kegg_annotation']] = results['annotation'].str.split('~', 1, expand=True)
+        results[['GenomeName', 'ProteinID']] = results['header'].str.split(diamond_search.separator, n=1, expand=True)
+        results[['Ref100_hit', 'Kegg_annotation']] = results['annotation'].str.split('~', n=1, expand=True)
+
+
 
         ''' Get a list of default KO id's from data
             Available categories are the keys in DefaultValues.feature_ordering
@@ -201,7 +203,7 @@ class Predictor():
 
             ''' 4: Call general model & specific models and derive predictions'''
 
-            vector_array = feature_vectors.iloc[:, 1:].values.astype(np.float)
+            vector_array = feature_vectors.iloc[:, 1:].values.astype(float)
 
 
             general_result_comp, general_result_cont = modelProc.run_prediction_general(vector_array)
