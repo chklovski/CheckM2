@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    name: build (${{ matrix.python-version }}, ${{ matrix.os }})
+    name: build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -14,7 +14,6 @@ jobs:
     strategy:
         matrix:
             os: ["ubuntu-latest"]
-            python-version: [3.12]
             build_type: [Release]
             compiler: [g++-9]
             include:
@@ -26,11 +25,13 @@ jobs:
           miniconda-version: 'latest'
           auto-update-conda: true
           mamba-version: "*"
-          python-version: ${{ matrix.python-version }}
           channels: conda-forge,bioconda
-          environment-file: checkm2.yml
-          activate-environment: checkm2
           create-environment: true
+          environment-file: checkm2.yml
+          activate-environment: checkm2     
+      - name: create initial environment
+        run: |
+          mamba create -n checkm2 -f checkm2.yml -y
       - run: |
           conda info
           conda list
