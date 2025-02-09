@@ -14,7 +14,7 @@ jobs:
     strategy:
         matrix:
             os: ["ubuntu-latest"]
-            python-version: [3.8]
+            python-version: [3.12]
             build_type: [Release]
             compiler: [g++-9]
             include:
