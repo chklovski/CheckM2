@@ -26,15 +26,14 @@ jobs:
           auto-update-conda: true
           mamba-version: "*"
           channels: conda-forge,bioconda
-          create-environment: true
-          environment-file: checkm2.yml
-          activate-environment: checkm2     
+          auto-activate-base: false
+          auto-update-conda: false
       - name: create initial environment
         run: |
           mamba create -n checkm2 -f checkm2.yml -y
+      - name: Activate environment
       - run: |
-          conda info
-          conda list
+          conda activate checkm2
       - name: package install
         run: python setup.py install
       - name: checkm2 CLI tests
