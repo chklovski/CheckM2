@@ -30,7 +30,7 @@ jobs:
           channels: conda-forge,bioconda
           environment-file: checkm2.yml
           activate-environment: checkm2
-	  create-environment: true
+          create-environment: true
       - run: |
           conda info
           conda list
