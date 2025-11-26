@@ -107,7 +107,7 @@ def main():
 
     predict_arguments.add_argument('--dbg_cos', action='store_true', help="DEBUG: write cosine similarity values to file [default: don't]", default=False)
     predict_arguments.add_argument('--dbg_vectors', action='store_true', help="DEBUG: dump pickled feature vectors to file [default: don't]", default=False)
-
+    predict_arguments.add_argument('--dbg_skip_checksum', action='store_true', help="DEBUG: skip database checksum validation [default: don't]", default=False)
 
     test_parser = new_subparser(subparsers, 'testrun', testrun_description)
     test_parser.add_argument('--threads', '-t', type=int, metavar='num_threads', help='number of CPUS to use [default: %i]' % num_threads, default=num_threads)
@@ -193,8 +193,9 @@ def main():
         tempDBpath = None
         if args.database_path is not None:
             logging.info(f'Custom database path provided for predict run. Checking database at {args.database_path}...')
-            if VersionControl().checksum_version_validate_DIAMOND(args.database_path):
-                tempDBpath = args.database_path
+            if not args.dbg_skip_checksum:
+                VersionControl().checksum_version_validate_DIAMOND(args.database_path)
+            tempDBpath = args.database_path
 
         logging.info("Running quality prediction workflow with {} threads.".format(args.threads))
         if len(args.input) == 1 and os.path.isdir(args.input[0]):
