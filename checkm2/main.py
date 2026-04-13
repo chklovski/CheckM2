@@ -108,6 +108,11 @@ def main():
     predict_arguments.add_argument('--dbg_cos', action='store_true', help="DEBUG: write cosine similarity values to file [default: don't]", default=False)
     predict_arguments.add_argument('--dbg_vectors', action='store_true', help="DEBUG: dump pickled feature vectors to file [default: don't]", default=False)
 
+    predict_arguments.add_argument('--ko_input',
+                                   help="Path to a folder containing per-genome KO annotation files (one KO ID per line, no header). "
+                                        "Skips DIAMOND search. Each file should be named {genome_name}.{ext}.",
+                                   default=None)
+
 
     test_parser = new_subparser(subparsers, 'testrun', testrun_description)
     test_parser.add_argument('--threads', '-t', type=int, metavar='num_threads', help='number of CPUS to use [default: %i]' % num_threads, default=num_threads)
@@ -162,6 +167,15 @@ def main():
 
     if args.subparser_name == 'predict':
 
+        # --resume and --ko_input are mutually exclusive
+        if args.resume and args.ko_input is not None:
+            logging.error("--resume and --ko_input cannot be used together.")
+            sys.exit(1)
+
+        # validate --ko_input folder
+        if args.ko_input is not None:
+            fileManager.check_if_dir_exists(args.ko_input)
+
         #check if folder is empty and force remove it if necessary
         if not args.resume:
             fileManager.check_empty_dir(args.output_directory, args.force)
@@ -199,10 +213,10 @@ def main():
         logging.info("Running quality prediction workflow with {} threads.".format(args.threads))
         if len(args.input) == 1 and os.path.isdir(args.input[0]):
                 predictor = predictQuality.Predictor(args.input[0], args.output_directory, args.extension, args.threads,
-                                                     args.lowmem, tempDBpath)
-                
+                                                     args.lowmem, tempDBpath, ko_input=args.ko_input)
+
                 predictor.prediction_wf(args.genes, mode, args.dbg_cos, args.dbg_vectors, args.stdout,
-                                        args.resume, args.remove_intermediates, args.ttable)
+                                        args.resume, args.remove_intermediates, args.ttable, ko_input=args.ko_input)
         else:
             if args.genes:
                 bin_extension = 'faa'
@@ -232,9 +246,9 @@ def main():
                 else:
                     shutil.copyfile(bin, os.path.join(bin_temporary_dir.name, '{}.{}'.format(os.path.splitext(os.path.basename(bin))[0], bin_extension)))
             predictor = predictQuality.Predictor(bin_temporary_dir.name, args.output_directory, bin_extension, args.threads,
-                                                 args.lowmem, tempDBpath)
+                                                 args.lowmem, tempDBpath, ko_input=args.ko_input)
             predictor.prediction_wf(args.genes, mode, args.dbg_cos, args.dbg_vectors,
-                                    args.stdout, args.resume, args.remove_intermediates, args.ttable)
+                                    args.stdout, args.resume, args.remove_intermediates, args.ttable, ko_input=args.ko_input)
             bin_temporary_dir.cleanup()
 
     elif args.subparser_name == 'testrun':

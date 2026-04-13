@@ -24,7 +24,7 @@ logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
 
 class Predictor():
-    def __init__(self, bin_folder, outdir, bin_extension='.fna', threads=1, lowmem=False, tempDBloc=None):
+    def __init__(self, bin_folder, outdir, bin_extension='.fna', threads=1, lowmem=False, tempDBloc=None, ko_input=None):
 
         self.bin_folder = bin_folder
         self.bin_extension = bin_extension
@@ -53,11 +53,12 @@ class Predictor():
         else:
             self.diamond_path = fileManager.DiamondDB().get_DB_location()
 
-        if self.diamond_path == None or self.diamond_path == '' or self.diamond_path == 'Not Set':
-            logging.error("Please download and install the CheckM2 database first (see 'checkm2 database -h')")
-            sys.exit(1)
+        if ko_input is None:
+            if self.diamond_path == None or self.diamond_path == '' or self.diamond_path == 'Not Set':
+                logging.error("Please download and install the CheckM2 database first (see 'checkm2 database -h')")
+                sys.exit(1)
 
-        fileManager.check_if_file_exists(self.diamond_path)
+            fileManager.check_if_file_exists(self.diamond_path)
 
 
     def __setup_bins(self):
@@ -81,7 +82,7 @@ class Predictor():
         return sorted(bin_files)
 
     def prediction_wf(self, genes_supplied=False, mode='auto', debug_cos=False,
-                      dumpvectors=False, stdout=False, resume=False, remove_intermediates=False, ttable=None):
+                      dumpvectors=False, stdout=False, resume=False, remove_intermediates=False, ttable=None, ko_input=None):
 
         #make sure models can be loaded without problems
         modelProc = modelProcessing.modelProcessor(self.total_threads)
@@ -126,28 +127,63 @@ class Predictor():
 
         if resume:
             logging.info("Reusing DIAMOND output from output directory: {}".format(diamond_search.diamond_out))
-                
+
             diamond_out = [x for x in os.listdir(diamond_search.diamond_out) if x.startswith('DIAMOND_RESULTS')]
             if len(diamond_out) == 0:
                 logging.error("No DIAMOND outputs have been found in {}. Resuming is not possible.".format(diamond_search.diamond_out))
                 exit(1)
+
+            logging.info('Processing DIAMOND output')
+            results = pd.concat([pd.read_csv(os.path.join(diamond_search.diamond_out, entry), sep='\t', usecols=[0, 1],
+                                             names=['header', 'annotation']) for entry in diamond_out])
+            results[['GenomeName', 'ProteinID']] = results['header'].str.split(diamond_search.separator, n=1, expand=True)
+            results[['Ref100_hit', 'Kegg_annotation']] = results['annotation'].str.split('~', n=1, expand=True)
+
+        elif ko_input is not None:
+            logging.info("Using user-supplied KO annotation folder: {}".format(ko_input))
+
+            # Validate that annotation files exist for all input genomes
+            genome_names = {os.path.splitext(os.path.basename(f))[0] for f in self.bin_files}
+            annot_names = {
+                os.path.splitext(f)[0]
+                for f in os.listdir(ko_input)
+                if not f.startswith('.')
+            }
+            missing_annot = genome_names - annot_names
+            extra_annot = annot_names - genome_names
+            if missing_annot:
+                logging.error("Annotation files missing for genomes: {}".format(missing_annot))
+                sys.exit(1)
+            if extra_annot:
+                logging.warning("Annotation files found for unknown genomes (will be ignored): {}".format(extra_annot))
+
+            # Build results DataFrame from annotation folder (one KO ID per line)
+            rows = []
+            for fname in sorted(os.listdir(ko_input)):
+                if fname.startswith('.'):
+                    continue
+                genome_name = os.path.splitext(fname)[0]
+                if genome_name not in genome_names:
+                    continue
+                with open(os.path.join(ko_input, fname)) as f:
+                    for line in f:
+                        ko = line.strip()
+                        if ko:
+                            rows.append({'GenomeName': genome_name, 'Kegg_annotation': ko})
+            results = pd.DataFrame(rows)
+
         else:
             diamond_out = diamond_search.run(prodigal_files)
 
-        ### MOVED
-
-        logging.info('Processing DIAMOND output')
-        # concatenate all results even if only one
-        results = pd.concat([pd.read_csv(os.path.join(diamond_search.diamond_out, entry), sep='\t', usecols=[0, 1],
-                                         names=['header', 'annotation']) for entry in diamond_out])
+            logging.info('Processing DIAMOND output')
+            results = pd.concat([pd.read_csv(os.path.join(diamond_search.diamond_out, entry), sep='\t', usecols=[0, 1],
+                                             names=['header', 'annotation']) for entry in diamond_out])
+            results[['GenomeName', 'ProteinID']] = results['header'].str.split(diamond_search.separator, n=1, expand=True)
+            results[['Ref100_hit', 'Kegg_annotation']] = results['annotation'].str.split('~', n=1, expand=True)
 
         if len(results) < 1:
-            logging.error('No DIAMOND annotation was generated. Exiting')
+            logging.error('No KO annotation was found. Exiting')
             sys.exit(1)
-
-        # Split columns into usable series
-        results[['GenomeName', 'ProteinID']] = results['header'].str.split(diamond_search.separator, n=1, expand=True)
-        results[['Ref100_hit', 'Kegg_annotation']] = results['annotation'].str.split('~', n=1, expand=True)
 
 
 
