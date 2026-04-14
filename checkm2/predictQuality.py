@@ -84,6 +84,10 @@ class Predictor():
     def prediction_wf(self, genes_supplied=False, mode='auto', debug_cos=False,
                       dumpvectors=False, stdout=False, resume=False, remove_intermediates=False, ttable=None, ko_input=None):
 
+        # --ko_input implies protein file input (like --genes)
+        if ko_input is not None:
+            genes_supplied = True
+
         #make sure models can be loaded without problems
         modelProc = modelProcessing.modelProcessor(self.total_threads)
 

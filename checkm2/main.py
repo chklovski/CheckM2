@@ -175,6 +175,9 @@ def main():
         # validate --ko_input folder
         if args.ko_input is not None:
             fileManager.check_if_dir_exists(args.ko_input)
+            # --ko_input implies protein file input; default extension to .faa if not explicitly set
+            if args.extension == '.fna':
+                args.extension = '.faa'
 
         #check if folder is empty and force remove it if necessary
         if not args.resume:
@@ -218,7 +221,7 @@ def main():
                 predictor.prediction_wf(args.genes, mode, args.dbg_cos, args.dbg_vectors, args.stdout,
                                         args.resume, args.remove_intermediates, args.ttable, ko_input=args.ko_input)
         else:
-            if args.genes:
+            if args.genes or args.ko_input is not None:
                 bin_extension = 'faa'
             else:
                 bin_extension = 'fna'
