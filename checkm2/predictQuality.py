@@ -7,6 +7,7 @@ from checkm2.versionControl import VersionControl
 from checkm2 import keggData
 from checkm2 import modelPostprocessing
 from checkm2 import fileManager
+from checkm2 import sequenceClasses
 
 import os
 import multiprocessing as mp
@@ -146,8 +147,9 @@ class Predictor():
         elif ko_input is not None:
             logging.info("Using user-supplied KO annotation folder: {}".format(ko_input))
 
-            # Validate that annotation files exist for all input genomes
-            genome_names = {os.path.splitext(os.path.basename(f))[0] for f in self.bin_files}
+            # Map genome name -> protein file path
+            genome_name_to_file = {os.path.splitext(os.path.basename(f))[0]: f for f in self.bin_files}
+            genome_names = set(genome_name_to_file.keys())
             annot_names = {
                 os.path.splitext(f)[0]
                 for f in os.listdir(ko_input)
@@ -161,20 +163,48 @@ class Predictor():
             if extra_annot:
                 logging.warning("Annotation files found for unknown genomes (will be ignored): {}".format(extra_annot))
 
-            # Build results DataFrame from annotation folder (one KO ID per line)
+            # Read annotation files (CSV: gene_id, ko) and validate sequence names
             rows = []
+            skipped_genomes = set()
             for fname in sorted(os.listdir(ko_input)):
                 if fname.startswith('.'):
                     continue
                 genome_name = os.path.splitext(fname)[0]
                 if genome_name not in genome_names:
                     continue
-                with open(os.path.join(ko_input, fname)) as f:
-                    for line in f:
-                        ko = line.strip()
-                        if ko:
-                            rows.append({'GenomeName': genome_name, 'Kegg_annotation': ko})
+
+                annot_df = pd.read_csv(os.path.join(ko_input, fname))
+                annot_gene_ids = set(annot_df['gene_id'].dropna().astype(str))
+
+                # Validate gene_ids against protein FASTA sequence names
+                fasta_names = set(sequenceClasses.SeqReader().read_nucleotide_sequences(
+                    genome_name_to_file[genome_name]).keys())
+                extra_in_annot = annot_gene_ids - fasta_names
+                if extra_in_annot:
+                    logging.error(
+                        "Skipping {}: annotation file '{}' contains gene IDs not found in protein file.".format(
+                            genome_name, fname))
+                    skipped_genomes.add(genome_name)
+                    continue
+
+                missing_in_annot = fasta_names - annot_gene_ids
+                if missing_in_annot:
+                    logging.warning(
+                        "{}: {} sequences have no annotation entry. Proceeding.".format(
+                            genome_name, len(missing_in_annot)))
+
+                # Collect KO annotations (skip rows with empty ko)
+                for _, row in annot_df.iterrows():
+                    ko = str(row['ko']).strip() if pd.notna(row['ko']) else ''
+                    if ko:
+                        rows.append({'GenomeName': genome_name, 'Kegg_annotation': ko})
+
             results = pd.DataFrame(rows)
+
+            # Remove skipped genomes from metadata_df
+            if skipped_genomes:
+                metadata_df = metadata_df[~metadata_df['Name'].isin(skipped_genomes)]
+                metadata_df.reset_index(drop=True, inplace=True)
 
         else:
             diamond_out = diamond_search.run(prodigal_files)
