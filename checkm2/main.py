@@ -214,7 +214,7 @@ def main():
             bin_temporary_dir = tempfile.TemporaryDirectory()
             for bin in args.input:
                 if os.stat(bin).st_size == 0:
-                    logging.warning("Skipping bin {} as it has a size of 0 bytes.".format(f))
+                    logging.warning("Skipping bin {} as it has a size of 0 bytes.".format(bin))
                 elif os.path.isdir(bin):
                     continue
                 elif bin.endswith('.gz'):
