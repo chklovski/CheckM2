@@ -53,7 +53,7 @@ class Predictor():
         else:
             self.diamond_path = fileManager.DiamondDB().get_DB_location()
 
-        if self.diamond_path == None or self.diamond_path == '' or self.diamond_path == 'Not Set':
+        if self.diamond_path is None or self.diamond_path == '' or self.diamond_path == 'Not Set':
             logging.error("Please download and install the CheckM2 database first (see 'checkm2 database -h')")
             sys.exit(1)
 
@@ -322,12 +322,13 @@ class Predictor():
         
         return compare['Additional_Notes'].values
 
-    def __set_up_prodigal_thread(self, queue_in, queue_out, ttable, used_ttable, coding_density,
+    def _set_up_prodigal_thread(self, queue_in, queue_out, ttable, used_ttable, coding_density,
                                  N50, avg_gene_len, total_bases, cds_count, GC, totalContigs, maxContigLen):
 
+        # Change from __set_up_prodigal_thread because of macos arm64 errors due to name mangling
         while True:
             bin = queue_in.get(block=True, timeout=None)
-            if bin == None:
+            if bin is None:
                 break
 
             prodigal_thread = prodigal.ProdigalRunner(self.prodigal_folder, bin)
@@ -348,15 +349,16 @@ class Predictor():
             queue_out.put((bin, selected_coding_table, coding_density, N50, avg_gene_len, total_bases, cds_count,
                            GC, totalContigs, maxContigLen))
 
-    def __reportProgress(self, total_bins, queueIn):
+    def _reportProgress(self, total_bins, queueIn): 
         """Report number of processed bins."""
+        # Change from __reportProgress because of macos arm64 errors due to name mangling
 
         processed = 0
 
         while True:
             bin, selected_coding_table, coding_density, N50, \
             avg_gene_len, total_bases, cds_count, GC, totalContigs, maxContigLen = queueIn.get(block=True, timeout=None)
-            if bin == None:
+            if bin is None:
                 if logging.root.level == logging.INFO or logging.root.level == logging.DEBUG:
                     sys.stdout.write('\n')
                     sys.stdout.flush()
@@ -400,11 +402,11 @@ class Predictor():
             calcProc = []
             for _ in range(self.total_threads):
                 calcProc.append(
-                    mp.Process(target=self.__set_up_prodigal_thread, args=(workerQueue, writerQueue, ttable,
+                    mp.Process(target=self._set_up_prodigal_thread, args=(workerQueue, writerQueue, ttable,
                                                                            used_ttables, coding_density,
                                                                            N50, avg_gene_len,
                                                                            total_bases, cds_count, GC, totalContigs, maxContigLen)))
-            writeProc = mp.Process(target=self.__reportProgress, args=(len(self.bin_files), writerQueue))
+            writeProc = mp.Process(target=self._reportProgress, args=(len(self.bin_files), writerQueue))
 
             writeProc.start()
 
@@ -446,8 +448,8 @@ class Predictor():
             calcProc = []
             for _ in range(self.total_threads):
                 calcProc.append(
-                    mp.Process(target=self.__set_up_metadata_thread, args=(workerQueue, writerQueue, metadata_dict)))
-            writeProc = mp.Process(target=self.__report_progress_metadata, args=(len(faa_files), writerQueue))
+                    mp.Process(target=self._set_up_metadata_thread, args=(workerQueue, writerQueue, metadata_dict)))
+            writeProc = mp.Process(target=self._report_progress_metadata, args=(len(faa_files), writerQueue))
 
             writeProc.start()
 
@@ -469,11 +471,11 @@ class Predictor():
         # metadata_dict = process into df (metadata_dict)
         return metadata_dict
 
-    def __set_up_metadata_thread(self, queue_in, queue_out, metadata_dict):
+    def _set_up_metadata_thread(self, queue_in, queue_out, metadata_dict):
 
         while True:
             bin = queue_in.get(block=True, timeout=None)
-            if bin == None:
+            if bin is None:
                 break
 
             metadata_thread = metadata.MetadataCalculator(bin)
@@ -494,14 +496,14 @@ class Predictor():
 
             queue_out.put(bin)
 
-    def __report_progress_metadata(self, total_bins, queueIn):
+    def _report_progress_metadata(self, total_bins, queueIn):
         """Report number of processed bins."""
 
         processed = 0
 
         while True:
             bin = queueIn.get(block=True, timeout=None)
-            if bin[0] == None:
+            if bin[0] is None:
                 if logging.root.level == logging.INFO or logging.root.level == logging.DEBUG:
                     sys.stdout.write('\n')
                     sys.stdout.flush()
